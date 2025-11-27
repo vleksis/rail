@@ -1,13 +1,30 @@
 use rail::bytecode::OpCode;
 use rail::bytecode::chunk::Chunk;
 use rail::bytecode::disassembler::disassemble;
+use rail::runtime::function::Function;
+use rail::runtime::program::Program;
+use rail::vm::vm::VM;
 
 fn main() {
     let mut chunk = Chunk::new();
-    chunk.add_instruction(OpCode::Const, 0);
+    chunk.add_int64(4, 0);
+    chunk.add_int64(7, 1);
+    chunk.add_instruction(OpCode::I64Add, 3);
     chunk.add_instruction(OpCode::Return, 3);
-    chunk.add_instruction(OpCode::Pop, 42);
 
-    let dis = disassemble(&chunk);
-    dis.iter().for_each(|string| println!("{string}"));
+    // let dis = disassemble(&chunk);
+    // dis.iter().for_each(|string| println!("{string}"));
+
+    let main_fn = Function {
+        name: "main".to_string(),
+        chunk,
+        arity: 0,
+    };
+
+    let mut program = Program::new();
+    program.functions.push(main_fn);
+
+    let mut vm = VM::from(&program);
+    let e = vm.run();
+    println!("{e:?}")
 }

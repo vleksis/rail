@@ -44,10 +44,12 @@ pub enum OpCode {
 
     Pop = 90,
     Return = 91,
+    Call = 92,
 }
 
 impl OpCode {
-    pub fn from_byte(byte: u8) -> OpCode {
+    pub fn from_byte(byte: u8) -> Option<OpCode> {
+        // TODO(vleksis): add all opcodes
         let op = match byte {
             0 => OpCode::Const,
             1 => OpCode::True,
@@ -72,11 +74,12 @@ impl OpCode {
 
             90 => OpCode::Pop,
             91 => OpCode::Return,
+            92 => OpCode::Call,
 
-            _ => unimplemented!(),
+            _ => return None,
         };
 
-        op
+        Some(op)
     }
 
     pub fn name(&self) -> &'static str {
@@ -122,6 +125,7 @@ impl OpCode {
 
             OpCode::Pop => "Pop",
             OpCode::Return => "Return",
+            OpCode::Call => "Call",
         }
     }
 }
