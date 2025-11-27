@@ -5,3 +5,8 @@ edition = "2024"
 
 [dependencies]
 thiserror = "1"
+
+[features]
+default = ["trace_vm"]
+
+trace_vm = []

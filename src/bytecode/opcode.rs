@@ -48,8 +48,7 @@ pub enum OpCode {
 }
 
 impl OpCode {
-    pub fn from_byte(byte: u8) -> Option<OpCode> {
-        // TODO(vleksis): add all opcodes
+    pub fn from_byte(byte: u8) -> Option<Self> {
         let op = match byte {
             0 => OpCode::Const,
             1 => OpCode::True,
@@ -70,10 +69,29 @@ impl OpCode {
             32 => OpCode::I64Mul,
             33 => OpCode::I64Div,
 
+            40 => OpCode::U64Add,
+            41 => OpCode::U64Sub,
+            42 => OpCode::U64Mul,
+            43 => OpCode::U64Div,
+
+            50 => OpCode::F64Add,
+            51 => OpCode::F64Sub,
+            52 => OpCode::F64Mul,
+            53 => OpCode::F64Div,
+
+            60 => OpCode::I64Eq,
+            61 => OpCode::I64Lt,
+            62 => OpCode::I64Gt,
+
+            70 => OpCode::F64Eq,
+            71 => OpCode::F64Lt,
+            72 => OpCode::F64Gt,
+
             80 => OpCode::BoolNot,
 
             90 => OpCode::Pop,
             91 => OpCode::Return,
+
             92 => OpCode::Call,
 
             _ => return None,

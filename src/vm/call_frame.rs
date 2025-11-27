@@ -6,9 +6,9 @@ use crate::vm::error::{Result, VmError};
 
 #[derive(Debug)]
 pub struct CallFrame<'p> {
-    function: &'p Function,
-    ip: usize,
-    stack_base: usize,
+    pub(crate) function: &'p Function,
+    pub(crate) ip: usize,
+    pub(crate) stack_base: usize,
 }
 
 impl<'p> CallFrame<'p> {
@@ -20,17 +20,25 @@ impl<'p> CallFrame<'p> {
         }
     }
 
-    /// # Precondition:
-    /// ip is within chunk
+    /// Read OpCode at the current ip and advance ip.
     pub fn read_opcode(&mut self) -> Result<OpCode> {
+        if self.ip >= self.function.chunk.len() {
+            return Err(VmError::InvalidJumpTarget);
+        }
         let byte = self.function.chunk.get_byte(self.ip);
         self.ip += 1;
         OpCode::from_byte(byte).ok_or(VmError::InvalidOpCode)
     }
 
+    /// Read a big-endian u16 operand starting at the current ip and advance ip.
     pub fn read_u16(&mut self) -> Result<u16> {
+        if self.ip + 1 >= self.function.chunk.len() {
+            return Err(VmError::InvalidJumpTarget);
+        }
+        let hi = self.function.chunk.get_byte(self.ip) as u16;
+        let lo = self.function.chunk.get_byte(self.ip + 1) as u16;
         self.ip += 2;
-        Ok(0u16)
+        Ok((hi << 8) | lo)
     }
 
     pub fn get_const(&self, idx: u16) -> Value {

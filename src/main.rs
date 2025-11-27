@@ -7,13 +7,14 @@ use rail::vm::vm::VM;
 
 fn main() {
     let mut chunk = Chunk::new();
-    chunk.add_int64(4, 0);
+    chunk.add_int64(6, 0);
     chunk.add_int64(7, 1);
-    chunk.add_instruction(OpCode::I64Add, 3);
+    chunk.add_instruction(OpCode::I64Mul, 3);
     chunk.add_instruction(OpCode::Return, 3);
 
-    // let dis = disassemble(&chunk);
-    // dis.iter().for_each(|string| println!("{string}"));
+    let dis = disassemble(&chunk);
+    dis.iter().for_each(|string| println!("{string}"));
+    println!();
 
     let main_fn = Function {
         name: "main".to_string(),

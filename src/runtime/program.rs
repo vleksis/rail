@@ -14,4 +14,8 @@ impl Program {
             entry: 0,
         }
     }
+
+    pub fn get_function(&self, idx: u16) -> &Function {
+        &self.functions[idx as usize]
+    }
 }
