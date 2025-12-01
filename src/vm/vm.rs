@@ -24,11 +24,11 @@ impl<'p> VM<'p> {
     }
 
     fn current_frame(&self) -> Result<&CallFrame<'p>> {
-        return self.frames.last().ok_or(VmError::StackUnderflow);
+        self.frames.last().ok_or(VmError::StackUnderflow)
     }
 
     fn current_frame_mut(&mut self) -> Result<&mut CallFrame<'p>> {
-        return self.frames.last_mut().ok_or(VmError::StackUnderflow);
+        self.frames.last_mut().ok_or(VmError::StackUnderflow)
     }
 
     pub fn pop(&mut self) -> Result<Value> {
