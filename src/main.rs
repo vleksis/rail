@@ -1,31 +1,14 @@
-use rail::bytecode::OpCode;
-use rail::bytecode::chunk::Chunk;
-use rail::bytecode::disassembler::disassemble;
-use rail::runtime::function::Function;
-use rail::runtime::program::Program;
-use rail::vm::vm::VM;
+use rail::lexer::{lexer::Lexer, token::TokenKind};
 
 fn main() {
-    let mut chunk = Chunk::new();
-    chunk.add_int64(6, 0);
-    chunk.add_int64(7, 1);
-    chunk.add_instruction(OpCode::I64Mul, 3);
-    chunk.add_instruction(OpCode::Return, 3);
-
-    let dis = disassemble(&chunk);
-    dis.iter().for_each(|string| println!("{string}"));
-    println!();
-
-    let main_fn = Function {
-        name: "main".to_string(),
-        chunk,
-        arity: 0,
-    };
-
-    let mut program = Program::new();
-    program.functions.push(main_fn);
-
-    let mut vm = VM::from(&program);
-    let e = vm.run();
-    println!("{e:?}")
+    let args: Vec<String> = std::env::args().into_iter().collect();
+    let file = std::path::PathBuf::from(&args[1]);
+    let file = std::fs::read_to_string(file).unwrap();
+    let mut lexer = Lexer::new(&file);
+    while let Ok(tok) = lexer.scan_token() {
+        println!("{tok:?}");
+        if tok.get_kind() == TokenKind::Eof {
+            break;
+        }
+    }
 }
