@@ -7,7 +7,7 @@ fn main() {
     let mut lexer = Lexer::new(&file);
     while let Ok(tok) = lexer.scan_token() {
         println!("{tok:?}");
-        if tok.get_kind() == TokenKind::Eof {
+        if tok.get_kind() == TokenKind::EOF {
             break;
         }
     }

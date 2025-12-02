@@ -1,16 +1,16 @@
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 
 pub enum TokenKind {
-    Ident,
-    Fn,     // fn
-    Let,    // let
-    Const,  // const
-    Return, // return
-    If,     // if
-    Else,   // else
-    While,  // while
-    True,   // true
-    False,  // false
+    Identifier,
+    Function, // fn
+    Let,      // let
+    Const,    // const
+    Return,   // return
+    If,       // if
+    Else,     // else
+    While,    // while
+    True,     // true
+    False,    // false
 
     IntLit,
     FloatLit,
@@ -33,27 +33,27 @@ pub enum TokenKind {
     StarEqual,    // *=
     Slash,        // /
     SlashEqual,   // /=
-    SlashSlash,   // //
+    LineComment,  // //
     Percent,      // %
     PercentEqual, // %=
     Bang,         // !
-    BangEq,       // !=
-    Eq,           // =
-    EqEq,         // ==
-    Lt,           // <
-    LtEq,         // <=
-    Gt,           // >
-    GtEq,         // >=
+    BangEqual,    // !=
+    Equal,        // =
+    EqualEqual,   // ==
+    Less,         // <
+    LessEqual,    // <=
+    Greater,      // >
+    GreaterEqual, // >=
     AndAnd,       // &&
     OrOr,         // ||
 
-    Eof,
+    EOF,
 }
 
 impl TokenKind {
-    fn keyword(source: &str) -> Option<TokenKind> {
-        let res = match source {
-            "fn" => TokenKind::Fn,
+    pub fn ident_or_keyword(source: &str) -> TokenKind {
+        match source {
+            "fn" => TokenKind::Function,   // fn
             "let" => TokenKind::Let,       // let
             "const" => TokenKind::Const,   // const
             "return" => TokenKind::Return, // return
@@ -62,34 +62,9 @@ impl TokenKind {
             "while" => TokenKind::While,   // while
             "true" => TokenKind::True,     // true
             "false" => TokenKind::False,   // false
-            _ => return None,
-        };
-
-        Some(res)
+            _ => return TokenKind::Identifier,
+        }
     }
-
-    pub fn ident_or_keyword(source: &str) -> TokenKind {
-        Self::keyword(source).unwrap_or(TokenKind::Ident)
-    }
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub(crate) struct SourceLocation {
-    line: usize,   // 1-based
-    offset: usize, // 1-based
-    byte: usize,   // 0-based
-}
-
-impl SourceLocation {
-    pub fn new(line: usize, offset: usize, byte: usize) -> Self {
-        Self { line, offset, byte }
-    }
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub(crate) struct SourceSpan {
-    pub(crate) begin: SourceLocation,
-    pub(crate) end: SourceLocation,
 }
 
 #[derive(Debug, Clone, PartialEq)]

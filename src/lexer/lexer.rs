@@ -81,12 +81,12 @@ impl<'s> Lexer<'s> {
         }
     }
 
-    pub fn scan_token(&mut self) -> Result<Token> {
+    pub fn scan_token(&mut self) -> Result<Token<'s>> {
         self.skip_whitespace();
         self.start = self.current_byte;
 
         if self.is_at_end() {
-            return Ok(self.make_token(TokenKind::Eof));
+            return Ok(self.make_token(TokenKind::EOF));
         }
 
         let ch = self.advance().expect("not empty is checked");
@@ -142,30 +142,30 @@ impl<'s> Lexer<'s> {
             }
             '!' => {
                 if self.match_token('=') {
-                    self.make_token(TokenKind::BangEq)
+                    self.make_token(TokenKind::BangEqual)
                 } else {
                     self.make_token(TokenKind::Bang)
                 }
             }
             '=' => {
                 if self.match_token('=') {
-                    self.make_token(TokenKind::EqEq)
+                    self.make_token(TokenKind::EqualEqual)
                 } else {
-                    self.make_token(TokenKind::Eq)
+                    self.make_token(TokenKind::Equal)
                 }
             }
             '<' => {
                 if self.match_token('=') {
-                    self.make_token(TokenKind::LtEq)
+                    self.make_token(TokenKind::LessEqual)
                 } else {
-                    self.make_token(TokenKind::Lt)
+                    self.make_token(TokenKind::Less)
                 }
             }
             '>' => {
                 if self.match_token('=') {
-                    self.make_token(TokenKind::GtEq)
+                    self.make_token(TokenKind::GreaterEqual)
                 } else {
-                    self.make_token(TokenKind::Gt)
+                    self.make_token(TokenKind::Greater)
                 }
             }
             '&' => {
@@ -202,15 +202,15 @@ impl<'s> Lexer<'s> {
         Ok(result)
     }
 
-    fn scan_comment(&mut self) -> Token {
+    fn scan_comment(&mut self) -> Token<'s> {
         let line = self.line;
         while line == self.line {
             self.advance();
         }
-        self.make_token(TokenKind::SlashSlash)
+        self.make_token(TokenKind::LineComment)
     }
 
-    fn make_token(&self, kind: TokenKind) -> Token {
+    fn make_token(&self, kind: TokenKind) -> Token<'s> {
         let text = &self.source[self.start..self.current_byte];
         Token {
             kind,
@@ -258,16 +258,16 @@ mod test {
         assert_eq!(lex.scan_token()?.kind, TokenKind::Percent);
         assert_eq!(lex.scan_token()?.kind, TokenKind::PercentEqual);
         assert_eq!(lex.scan_token()?.kind, TokenKind::Bang);
-        assert_eq!(lex.scan_token()?.kind, TokenKind::BangEq);
-        assert_eq!(lex.scan_token()?.kind, TokenKind::Eq);
-        assert_eq!(lex.scan_token()?.kind, TokenKind::EqEq);
-        assert_eq!(lex.scan_token()?.kind, TokenKind::Lt);
-        assert_eq!(lex.scan_token()?.kind, TokenKind::LtEq);
-        assert_eq!(lex.scan_token()?.kind, TokenKind::Gt);
-        assert_eq!(lex.scan_token()?.kind, TokenKind::GtEq);
+        assert_eq!(lex.scan_token()?.kind, TokenKind::BangEqual);
+        assert_eq!(lex.scan_token()?.kind, TokenKind::Equal);
+        assert_eq!(lex.scan_token()?.kind, TokenKind::EqualEqual);
+        assert_eq!(lex.scan_token()?.kind, TokenKind::Less);
+        assert_eq!(lex.scan_token()?.kind, TokenKind::LessEqual);
+        assert_eq!(lex.scan_token()?.kind, TokenKind::Greater);
+        assert_eq!(lex.scan_token()?.kind, TokenKind::GreaterEqual);
         assert_eq!(lex.scan_token()?.kind, TokenKind::AndAnd);
         assert_eq!(lex.scan_token()?.kind, TokenKind::OrOr);
-        assert_eq!(lex.scan_token()?.kind, TokenKind::Eof);
+        assert_eq!(lex.scan_token()?.kind, TokenKind::EOF);
 
         Ok(())
     }
