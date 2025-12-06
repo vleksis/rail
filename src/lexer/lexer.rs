@@ -90,6 +90,7 @@ impl<'s> Lexer<'s> {
         }
 
         let ch = self.advance().expect("not empty is checked");
+        dbg!(ch);
 
         let result = match ch {
             '(' => self.make_token(TokenKind::LParen),
@@ -183,21 +184,39 @@ impl<'s> Lexer<'s> {
                 }
             }
             // TODO(vleksis): add number and types parsing
-            _ => {
-                loop {
-                    let cur = self.peek().unwrap();
-                    if cur.is_alphanumeric() {
-                        self.advance();
-                    } else {
-                        break;
+            c => {
+                if c.is_numeric() {
+                    loop {
+                        let cur = self.peek().unwrap();
+                        if cur.is_numeric() {
+                            self.advance();
+                        } else {
+                            break;
+                        }
                     }
-                }
 
-                self.make_token(TokenKind::ident_or_keyword(
-                    &self.source[self.start..self.current_byte],
-                ))
+                    let number = &self.source[self.start..self.current_byte];
+                    let number: i64 = number.parse().unwrap();
+
+                    self.make_token(TokenKind::IntLit(number))
+                } else {
+                    loop {
+                        let cur = self.peek().unwrap();
+                        if cur.is_alphanumeric() {
+                            self.advance();
+                        } else {
+                            break;
+                        }
+                    }
+
+                    self.make_token(TokenKind::ident_or_keyword(
+                        &self.source[self.start..self.current_byte],
+                    ))
+                }
             }
         };
+
+        dbg!(&result);
 
         Ok(result)
     }
@@ -232,8 +251,8 @@ mod test {
     #[test]
     fn simple_tokens() -> Result<()> {
         let mut lex = Lexer::new(
-            "()     {}, :;. 
-            + += - -= *     
+            "()     {}, :;.
+            + += - -= *
             *= / /= % %=
         ! != = == < <= > >=
                     && ||",

@@ -1,7 +1,7 @@
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-
 pub enum TokenKind {
     Identifier,
+
     Function, // fn
     Let,      // let
     Const,    // const
@@ -12,7 +12,7 @@ pub enum TokenKind {
     True,     // true
     False,    // false
 
-    IntLit,
+    IntLit(i64),
     FloatLit,
 
     LParen,    // (
@@ -48,6 +48,7 @@ pub enum TokenKind {
     OrOr,         // ||
 
     EOF,
+    Default,
 }
 
 impl TokenKind {
@@ -78,5 +79,14 @@ pub struct Token<'s> {
 impl<'s> Token<'s> {
     pub fn get_kind(&self) -> TokenKind {
         self.kind.clone()
+    }
+
+    pub fn default() -> Self {
+        Self {
+            kind: TokenKind::Default,
+            text: "",
+            line: usize::MAX,
+            byte: usize::MAX,
+        }
     }
 }

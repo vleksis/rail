@@ -5,6 +5,7 @@ edition = "2024"
 
 [dependencies]
 thiserror = "1"
+ptree = "0.4"
 
 [features]
 default = ["trace_vm"]
