@@ -8,6 +8,20 @@ pub struct Lexer<'s> {
     current_byte: usize,
 }
 
+enum NumberPrefix {
+    Bin,  // "0b"
+    Oct,  // "0o"
+    Hex,  // "0x"
+    None, // ""
+}
+
+enum NumberPostfix {
+    Int64,   // "i64"
+    Uint64,  // "u64"
+    Float64, // "f64"
+    None,    // ""
+}
+
 impl<'s> Lexer<'s> {
     pub fn new(source: &'s str) -> Self {
         Self {
@@ -81,6 +95,21 @@ impl<'s> Lexer<'s> {
         }
     }
 
+    fn multi_match(&mut self, expected: &'static str) -> bool {
+        let byte = self.current_byte;
+
+        for ch in expected.chars() {
+            if ch == self.peek().unwrap() {
+                self.advance();
+            } else {
+                self.current_byte = byte;
+                return false;
+            }
+        }
+
+        true
+    }
+
     pub fn scan_token(&mut self) -> Result<Token<'s>> {
         self.skip_whitespace();
         self.start = self.current_byte;
@@ -90,7 +119,6 @@ impl<'s> Lexer<'s> {
         }
 
         let ch = self.advance().expect("not empty is checked");
-        dbg!(ch);
 
         let result = match ch {
             '(' => self.make_token(TokenKind::LParen),
@@ -183,40 +211,15 @@ impl<'s> Lexer<'s> {
                     return Err(self.make_error("Impossible |"));
                 }
             }
-            // TODO(vleksis): add number and types parsing
+
             c => {
-                if c.is_numeric() {
-                    loop {
-                        let cur = self.peek().unwrap();
-                        if cur.is_numeric() {
-                            self.advance();
-                        } else {
-                            break;
-                        }
-                    }
-
-                    let number = &self.source[self.start..self.current_byte];
-                    let number: i64 = number.parse().unwrap();
-
-                    self.make_token(TokenKind::IntLit(number))
+                if c.is_ascii_digit() {
+                    self.scan_numeric()
                 } else {
-                    loop {
-                        let cur = self.peek().unwrap();
-                        if cur.is_alphanumeric() {
-                            self.advance();
-                        } else {
-                            break;
-                        }
-                    }
-
-                    self.make_token(TokenKind::ident_or_keyword(
-                        &self.source[self.start..self.current_byte],
-                    ))
+                    self.scan_ident_or_keyword()
                 }
             }
         };
-
-        dbg!(&result);
 
         Ok(result)
     }
@@ -227,6 +230,77 @@ impl<'s> Lexer<'s> {
             self.advance();
         }
         self.make_token(TokenKind::LineComment)
+    }
+
+    fn scan_number_prefix(&mut self) -> NumberPrefix {
+        if self.multi_match("0b") {
+            NumberPrefix::Bin
+        } else if self.multi_match("0o") {
+            NumberPrefix::Oct
+        } else if self.multi_match("0x") {
+            NumberPrefix::Hex
+        } else {
+            NumberPrefix::None
+        }
+    }
+
+    /// Return true if number has dot
+    fn scan_number_core(&mut self) -> bool {
+        while self.peek().unwrap().is_numeric() {
+            self.advance();
+        }
+
+        if self.match_token('.') {
+            while self.peek().unwrap().is_numeric() {
+                self.advance();
+            }
+
+            true
+        } else {
+            false
+        }
+    }
+
+    fn scan_number_postfix(&mut self) -> NumberPostfix {
+        if self.multi_match("f64") {
+            NumberPostfix::Float64
+        } else if self.multi_match("i64") {
+            NumberPostfix::Int64
+        } else if self.multi_match("u64") {
+            NumberPostfix::Uint64
+        } else {
+            NumberPostfix::None
+        }
+    }
+
+    fn scan_numeric(&mut self) -> Token<'s> {
+        let pref = self.scan_number_prefix();
+        let has_dot = self.scan_number_core();
+        let num = self.get_text();
+        let post = self.scan_number_postfix();
+        let kind = match post {
+            NumberPostfix::Int64 => TokenKind::Int64Lit(num.parse().unwrap()),
+            NumberPostfix::Uint64 => TokenKind::Uint64Lit(num.parse().unwrap()),
+            NumberPostfix::Float64 => TokenKind::FloatLit(num.parse().unwrap()),
+            NumberPostfix::None => match has_dot {
+                true => TokenKind::FloatLit(num.parse().unwrap()),
+                false => TokenKind::Int64Lit(num.parse().unwrap()),
+            },
+        };
+
+        self.make_token(kind)
+    }
+
+    fn scan_ident_or_keyword(&mut self) -> Token<'s> {
+        while self.peek().unwrap().is_alphanumeric() {
+            self.advance();
+        }
+        let text = self.get_text();
+        self.make_token(TokenKind::ident_or_keyword(text))
+    }
+
+    fn get_text(&self) -> &'s str {
+        &self.source[self.start..self.current_byte]
     }
 
     fn make_token(&self, kind: TokenKind) -> Token<'s> {

@@ -1,4 +1,4 @@
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub enum TokenKind {
     Identifier,
 
@@ -12,8 +12,9 @@ pub enum TokenKind {
     True,     // true
     False,    // false
 
-    IntLit(i64),
-    FloatLit,
+    Int64Lit(i64),
+    Uint64Lit(u64),
+    FloatLit(f64),
 
     LParen,    // (
     RParen,    // )

@@ -1,102 +1,104 @@
-use ptree::TreeItem;
+use crate::ast::op::{InfixOperator, PostfixOperator, PrefixOperator};
+
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
+pub struct ExpressionId(usize);
 
 #[derive(Debug)]
-pub enum ExpressionNode {
+pub struct ExpressionNode {
+    pub(crate) uid: ExpressionId,
+    pub(crate) kind: ExpressionKind,
+}
+
+#[derive(Debug)]
+pub(crate) enum ExpressionKind {
     Int64(i64),
     Uint64(u64),
     Float64(f64),
     Bool(bool),
     Unit,
 
-    Addition(AdditionNode),
-    Subtraction(SubtractionNode),
-    Multiplication(MultiplicationNode),
-    Division(DivisionNode),
+    Infix(Infix),
 
-    IntegralNegation(IntegralNegationNode),
-    BooleanNegation(BooleanNegationNode),
+    Prefix(Prefix),
 }
 
 #[derive(Debug)]
-pub struct AdditionNode {
-    pub(crate) lhs: Box<ExpressionNode>,
-    pub(crate) rhs: Box<ExpressionNode>,
+pub(crate) struct Infix {
+    pub(crate) lhs: ExpressionId,
+    pub(crate) rhs: ExpressionId,
+    pub(crate) op: InfixOperator,
 }
 
 #[derive(Debug)]
-pub struct SubtractionNode {
-    pub(crate) lhs: Box<ExpressionNode>,
-    pub(crate) rhs: Box<ExpressionNode>,
+pub(crate) struct Prefix {
+    pub(crate) exp: ExpressionId,
+    pub(crate) op: PrefixOperator,
 }
 
-#[derive(Debug)]
-pub struct MultiplicationNode {
-    pub(crate) lhs: Box<ExpressionNode>,
-    pub(crate) rhs: Box<ExpressionNode>,
+#[derive(Debug, Default)]
+pub struct ExprArena {
+    nodes: Vec<ExpressionNode>,
 }
 
-#[derive(Debug)]
-pub struct DivisionNode {
-    pub(crate) lhs: Box<ExpressionNode>,
-    pub(crate) rhs: Box<ExpressionNode>,
-}
-
-#[derive(Debug)]
-pub struct IntegralNegationNode {
-    pub(crate) exp: Box<ExpressionNode>,
-}
-
-#[derive(Debug)]
-pub struct BooleanNegationNode {
-    pub(crate) exp: Box<ExpressionNode>,
-}
-
-impl<'s> TreeItem for &'s ExpressionNode {
-    type Child = &'s ExpressionNode;
-
-    fn write_self<W: std::io::Write>(
-        &self,
-        f: &mut W,
-        _style: &ptree::Style,
-    ) -> std::io::Result<()> {
-        use std::io::Write as _;
-        let label = match self {
-            ExpressionNode::Int64(v) => format!("{}", v),
-            ExpressionNode::Uint64(v) => format!("{}", v),
-            ExpressionNode::Float64(v) => format!("{}", v),
-            ExpressionNode::Bool(b) => format!("{}", b),
-            ExpressionNode::Unit => "()".to_string(),
-
-            ExpressionNode::Addition(_) => "Addition".to_string(),
-            ExpressionNode::Subtraction(_) => "Subtraction".to_string(),
-            ExpressionNode::Multiplication(_) => "Multiplication".to_string(),
-            ExpressionNode::Division(_) => "Division".to_string(),
-
-            ExpressionNode::IntegralNegation(_) => "IntegralNegation".to_string(),
-            ExpressionNode::BooleanNegation(_) => "BooleanNegation".to_string(),
-        };
-        write!(f, "{}", label)
+impl ExprArena {
+    pub fn get(&self, id: ExpressionId) -> &ExpressionNode {
+        &self.nodes[id.0]
     }
 
-    fn children(&self) -> std::borrow::Cow<[Self::Child]> {
-        use std::borrow::Cow;
+    pub fn len(&self) -> usize {
+        self.nodes.len()
+    }
+}
 
-        let v: Vec<&ExpressionNode> = match self {
-            ExpressionNode::Addition(n) => vec![&n.lhs, &n.rhs],
-            ExpressionNode::Subtraction(n) => vec![&n.lhs, &n.rhs],
-            ExpressionNode::Multiplication(n) => vec![&n.lhs, &n.rhs],
-            ExpressionNode::Division(n) => vec![&n.lhs, &n.rhs],
+#[derive(Debug, Default)]
+pub struct ASTBuilder {
+    pub arena: ExprArena,
+}
 
-            ExpressionNode::IntegralNegation(n) => vec![&n.exp],
-            ExpressionNode::BooleanNegation(n) => vec![&n.exp],
+impl ASTBuilder {
+    fn push(&mut self, kind: ExpressionKind) -> ExpressionId {
+        let uid = ExpressionId(self.arena.len());
+        let node = ExpressionNode { kind, uid };
+        self.arena.nodes.push(node);
+        uid
+    }
 
-            ExpressionNode::Int64(_)
-            | ExpressionNode::Uint64(_)
-            | ExpressionNode::Float64(_)
-            | ExpressionNode::Bool(_)
-            | ExpressionNode::Unit => Vec::new(),
+    pub(crate) fn make_int64(&mut self, i: i64) -> ExpressionId {
+        let kind = ExpressionKind::Int64(i);
+        self.push(kind)
+    }
+
+    pub(crate) fn make_uint64(&mut self, u: u64) -> ExpressionId {
+        let kind = ExpressionKind::Uint64(u);
+        self.push(kind)
+    }
+
+    pub(crate) fn make_float64(&mut self, f: f64) -> ExpressionId {
+        let kind = ExpressionKind::Float64(f);
+        self.push(kind)
+    }
+
+    pub(crate) fn make_infix(
+        &mut self,
+        op: InfixOperator,
+        lhs: ExpressionId,
+        rhs: ExpressionId,
+    ) -> ExpressionId {
+        let kind = Infix { lhs, rhs, op };
+        let kind = ExpressionKind::Infix(kind);
+        self.push(kind)
+    }
+
+    pub(crate) fn make_prefix(&mut self, op: PrefixOperator, exp: ExpressionId) -> ExpressionId {
+        let kind = Prefix { exp, op };
+        let kind = ExpressionKind::Prefix(kind);
+        self.push(kind)
+    }
+
+    pub(crate) fn make_postfix(&mut self, op: PostfixOperator, exp: ExpressionId) -> ExpressionId {
+        let kind = match op {
+            PostfixOperator::Nothing => unimplemented!(),
         };
-
-        Cow::Owned(v)
+        self.push(kind)
     }
 }
