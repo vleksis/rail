@@ -1,8 +1,8 @@
-# Rail Grammar
+/* Rail Language grammar */
 
-## Expressions
 
-```ebnf
+/* Expressions */
+
 <Expression>
   ::= <LiteralExpression>
     | <OperatorExpression>
@@ -38,15 +38,13 @@
 <GroupedExpression> ::= "(" <Expression> ")"
 
 <LiteralExpression>
-  ::= <IntegerLiteral>
-    | <FloatLiteral>
-    | "true"
-    | "false"
-```
+  ::= <NumericLiteral>
+    | <BoolLiteral>
+    | <UnitLiteral>
 
-## Literals
 
-```ebnf
+/* Literals */
+
 <Letter>
   ::= "A" | "B" | "C" | "D" | "E" | "F" | "G"
     | "H" | "I" | "J" | "K" | "L" | "M" | "N"
@@ -58,34 +56,48 @@
     | "x" | "y" | "z"
 
 <BinDigit> ::= "0" | "1"
-
+<OctDigit> ::= "0" | "1" | "2" | "3" | "4" | "5" | "6" | "7"
+<HexDigit> ::= "0" | "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9" | "A" | "B" | "C" | "D" | "E" | "F"
 <DecDigit> ::= "0" | "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9"
 
-<BinLiteral> ::= <BinDigit>+
+<BinNumber> ::= "0b" <BinDigit>+
+<OctNumber> ::= "0o" <OctDigit>+
+<HexNumber> ::= "0x" <HexDigit>+
+<DecNumber> ::= <DecDigit>+
+<Number> ::= <BinNumber> | <OctNumber> | <HexNumber> | <DecNumber>
 
-<DecLiteral> ::= <DecDigit>+
+<Int64Number> ::= <Number> "i64"?
+
+<Uint64Number> ::= <Number> "u64"
+
+<Float64Number> ::= <DecNumber> "." <DecNumber> "f64"?
 
 <IntegerLiteral>
-  ::= <BinLiteral>
-    | <DecLiteral>
+  ::= <Int64Number>
+    | <Uint64Number>
 
-<FloatLiteral> ::= <DecLiteral> "." <DecLiteral>
-```
+<FloatLiteral>
+  ::= <Float64Number>
 
-## Statements
+<NumericLiteral> ::= <IntegerLiteral> | <FloatLiteral>
 
-```ebnf
+<BoolLiteral> ::= "true" | "false"
+
+<UnitLiteral> ::= "()"
+
+
+/* Statements */
+
 <Statement>
   ::= ";"
     | <ExpressionStatement>
 
 <ExpressionStatement>
   ::= <Expression> ";"
-```
 
-## Types
 
-```ebnf
+/* Types */
+
 <Type>
   ::= <ParethesizedType>
     | <NeverType>
@@ -98,4 +110,3 @@
 <TupleType>
   ::= "(" ")"
     | "(" (<Type> ",")+ <Type>? ")"
-```
