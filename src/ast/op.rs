@@ -1,6 +1,6 @@
 use crate::lexer::token::TokenKind;
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy, Hash, PartialEq, Eq)]
 pub(crate) enum InfixOperator {
     Plus,
     Minus,
@@ -29,7 +29,7 @@ impl InfixOperator {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy, Hash, PartialEq, Eq)]
 pub(crate) enum PrefixOperator {
     Plus,
     Minus,
@@ -54,7 +54,7 @@ impl PrefixOperator {
 }
 
 /// There is no PostfixOperator right now
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy, Hash, PartialEq, Eq)]
 pub(crate) enum PostfixOperator {
     Nothing,
 }
