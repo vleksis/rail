@@ -243,7 +243,12 @@ impl<'p> VM<'p> {
         }
 
         // main always return int64
-        self.pop_int64()
+        println!("Leaving main");
+        let value = dbg!(self.pop())?;
+        match value {
+            Value::Int64(i) => Ok(i),
+            _ => Err(VmError::TypeMismatch("Expected int64")),
+        }
     }
 }
 

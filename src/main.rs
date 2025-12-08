@@ -3,10 +3,15 @@ use std::collections::HashMap;
 use rail::{
     ast::{
         ast_printer::TreePrinter,
+        compiler::CodeGen,
+        node::ExpressionId,
         parser::Parser,
-        types::{CompilationUnit, TypeEnv, Typer},
+        types::{CompilationUnit, Type, TypeEnv, Typer},
     },
+    bytecode::{OpCode, chunk::Chunk},
     lexer::lexer::Lexer,
+    runtime::{function::Function, program::Program},
+    vm::vm::VM,
 };
 
 fn main() {
@@ -18,16 +23,33 @@ fn main() {
     let lexer = Lexer::new(&file);
     let mut parser = Parser::new(lexer);
     let exp = parser.parse_expression();
-    let printer = TreePrinter::new(&parser.builder.arena);
+
+    let arena = parser.builder.arena;
+    let printer = TreePrinter::new(&arena);
     printer.print(exp);
 
     let env = TypeEnv::new();
     let typer = Typer::new(&env);
-    let mut unit = CompilationUnit {
-        arena: parser.builder.arena,
-        types: HashMap::new(),
+    let mut types: HashMap<ExpressionId, Type> = HashMap::new();
+
+    let ty = typer.calculate_type(&arena, &mut types, exp);
+    dbg!(&types);
+
+    let mut compiler = CodeGen::new();
+
+    let mut chunk = Chunk::new();
+    compiler.compile_expr(&arena, &types, &mut chunk, exp);
+    chunk.add_instruction(OpCode::Return, 100);
+
+    let main_fn = Function {
+        name: "main".to_string(),
+        chunk,
+        arity: 0,
     };
 
-    let ty = typer.calculate_type(&unit.arena, &mut unit.types, exp);
-    dbg!(ty);
+    let mut program = Program::new();
+    program.functions.push(main_fn);
+
+    let mut vm = VM::from(&program);
+    let _ = vm.run();
 }

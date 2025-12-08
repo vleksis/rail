@@ -33,15 +33,24 @@ impl Chunk {
         self.lines.push(line);
     }
 
-    pub fn add_const(&mut self, value: Value, line: usize) -> u16 {
+    pub fn add_const(&mut self, value: Value, line: usize) {
         let idx: u16 = self.consts.len().try_into().expect("Too many constants");
         self.consts.push(value);
         self.add_instruction(OpCode::Const, line);
         self.push_u16(idx, line);
-        idx
     }
-    pub fn add_int64(&mut self, i: i64, line: usize) -> u16 {
+
+    pub fn add_int64(&mut self, i: i64, line: usize) {
         self.add_const(Value::Int64(i), line)
+    }
+    pub fn add_uint64(&mut self, u: u64, line: usize) {
+        self.add_const(Value::Uint64(u), line);
+    }
+    pub fn add_float64(&mut self, f: f64, line: usize) {
+        self.add_const(Value::Float64(f), line);
+    }
+    pub fn add_bool(&mut self, b: bool, line: usize) {
+        self.add_const(Value::Bool(b), line);
     }
 
     /// Number of bytes in the code stream

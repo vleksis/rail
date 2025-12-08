@@ -29,6 +29,7 @@ impl TypeEnv {
             prefix: Self::default_prefix(),
         }
     }
+
     fn default_infix() -> HashMap<(InfixOperator, Type, Type), Type> {
         use InfixOperator::*;
         use Type::*;
@@ -102,18 +103,15 @@ impl<'e> Typer<'e> {
             ExpressionKind::Infix(node) => {
                 let lty = self.calculate_type(arena, types, node.lhs)?;
                 let rty = self.calculate_type(arena, types, node.rhs)?;
-                let ty = self.env.resolve_infix(node.op, lty, rty)?;
-                types.insert(id, ty);
-                ty
+                self.env.resolve_infix(node.op, lty, rty)?
             }
             ExpressionKind::Prefix(node) => {
                 let ty = self.calculate_type(arena, types, node.exp)?;
-                let ty = self.env.resolve_prefix(node.op, ty)?;
-                types.insert(id, ty);
-                ty
+                self.env.resolve_prefix(node.op, ty)?
             }
         };
 
+        types.insert(id, ty);
         dbg!(ty);
         Ok(ty)
     }
