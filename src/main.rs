@@ -3,10 +3,10 @@ use std::collections::HashMap;
 use rail::{
     ast::{
         ast_printer::TreePrinter,
-        compiler::CodeGen,
+        codegen::CodeGen,
         node::ExpressionId,
         parser::Parser,
-        types::{CompilationUnit, Type, TypeEnv, Typer},
+        types::{Type, TypeEnv, Typer},
     },
     bytecode::{OpCode, chunk::Chunk},
     lexer::lexer::Lexer,
