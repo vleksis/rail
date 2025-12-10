@@ -86,143 +86,170 @@ impl<'p> Vm<'p> {
     }
 
     pub fn run(&mut self) -> Result<i64> {
+        use OpCode::*;
+
         let entry_function = &self.program.functions[self.program.entry];
         let _ = self.push_frame(entry_function);
         self.trace_call_enter(entry_function);
+
         while let Ok(frame) = self.current_frame_mut() {
             let op = frame.read_opcode()?;
 
             let _ = match op {
-                OpCode::Const => {
+                Const => {
                     let idx = frame.read_u16()?;
                     let value = frame.get_const(idx);
-                    self.trace_op_u16(OpCode::Const, idx);
+                    self.trace_op_u16(Const, idx);
                     self.push(value)
                 }
 
-                OpCode::I64Add => {
+                I64Add => {
                     let rhs = self.pop_int64()?;
                     let lhs = self.pop_int64()?;
-                    self.trace_op(OpCode::I64Add);
+                    self.trace_op(I64Add);
                     self.push_int64(lhs + rhs)
                 }
-                OpCode::I64Sub => {
+                I64Sub => {
                     let rhs = self.pop_int64()?;
                     let lhs = self.pop_int64()?;
-                    self.trace_op(OpCode::I64Sub);
+                    self.trace_op(I64Sub);
                     self.push_int64(lhs - rhs)
                 }
-                OpCode::I64Mul => {
+                I64Mul => {
                     let rhs = self.pop_int64()?;
                     let lhs = self.pop_int64()?;
-                    self.trace_op(OpCode::I64Mul);
+                    self.trace_op(I64Mul);
                     self.push_int64(lhs * rhs)
                 }
-                OpCode::I64Div => {
+                I64Div => {
                     let rhs = self.pop_int64()?;
                     let lhs = self.pop_int64()?;
-                    self.trace_op(OpCode::I64Div);
+                    self.trace_op(I64Div);
                     self.push_int64(lhs / rhs)
                 }
-                OpCode::I64Eq => {
+                I64Equal => {
                     let rhs = self.pop_int64()?;
                     let lhs = self.pop_int64()?;
-                    self.trace_op(OpCode::I64Eq);
+                    self.trace_op(I64Equal);
                     self.push_bool(lhs == rhs)
                 }
-                OpCode::I64Lt => {
+                I64NotEqual => {
                     let rhs = self.pop_int64()?;
                     let lhs = self.pop_int64()?;
-                    self.trace_op(OpCode::I64Lt);
+                    self.trace_op(I64NotEqual);
+                    self.push_bool(lhs != rhs)
+                }
+                I64Less => {
+                    let rhs = self.pop_int64()?;
+                    let lhs = self.pop_int64()?;
+                    self.trace_op(I64Less);
                     self.push_bool(lhs < rhs)
                 }
-                OpCode::I64Gt => {
+                I64LessEqual => {
                     let rhs = self.pop_int64()?;
                     let lhs = self.pop_int64()?;
-                    self.trace_op(OpCode::I64Gt);
+                    self.trace_op(I64LessEqual);
+                    self.push_bool(lhs <= rhs)
+                }
+                I64Greater => {
+                    let rhs = self.pop_int64()?;
+                    let lhs = self.pop_int64()?;
+                    self.trace_op(I64Greater);
                     self.push_bool(lhs > rhs)
                 }
-
-                OpCode::U64Add => {
-                    let rhs = self.pop_uint64()?;
-                    let lhs = self.pop_uint64()?;
-                    self.trace_op(OpCode::U64Add);
-                    self.push_uint64(lhs + rhs)
-                }
-                OpCode::U64Sub => {
-                    let rhs = self.pop_uint64()?;
-                    let lhs = self.pop_uint64()?;
-                    self.trace_op(OpCode::U64Sub);
-                    self.push_uint64(lhs - rhs)
-                }
-                OpCode::U64Mul => {
-                    let rhs = self.pop_uint64()?;
-                    let lhs = self.pop_uint64()?;
-                    self.trace_op(OpCode::U64Mul);
-                    self.push_uint64(lhs * rhs)
-                }
-                OpCode::U64Div => {
-                    let rhs = self.pop_uint64()?;
-                    let lhs = self.pop_uint64()?;
-                    self.trace_op(OpCode::U64Div);
-                    self.push_uint64(lhs / rhs)
+                I64GreaterEqual => {
+                    let rhs = self.pop_int64()?;
+                    let lhs = self.pop_int64()?;
+                    self.trace_op(I64GreaterEqual);
+                    self.push_bool(lhs >= rhs)
                 }
 
-                OpCode::F64Add => {
-                    let rhs = self.pop_float64()?;
-                    let lhs = self.pop_float64()?;
-                    self.trace_op(OpCode::F64Add);
-                    self.push_float64(lhs + rhs)
-                }
-                OpCode::F64Sub => {
-                    let rhs = self.pop_float64()?;
-                    let lhs = self.pop_float64()?;
-                    self.trace_op(OpCode::F64Sub);
-                    self.push_float64(lhs - rhs)
-                }
-                OpCode::F64Mul => {
-                    let rhs = self.pop_float64()?;
-                    let lhs = self.pop_float64()?;
-                    self.trace_op(OpCode::F64Mul);
-                    self.push_float64(lhs * rhs)
-                }
-                OpCode::F64Div => {
-                    let rhs = self.pop_float64()?;
-                    let lhs = self.pop_float64()?;
-                    self.trace_op(OpCode::F64Div);
-                    self.push_float64(lhs / rhs)
-                }
-                OpCode::F64Eq => {
-                    let rhs = self.pop_float64()?;
-                    let lhs = self.pop_float64()?;
-                    self.trace_op(OpCode::F64Eq);
+                U64Equal => {
+                    let rhs = self.pop_uint64()?;
+                    let lhs = self.pop_uint64()?;
+                    self.trace_op(U64Equal);
                     self.push_bool(lhs == rhs)
                 }
-                OpCode::F64Lt => {
-                    let rhs = self.pop_float64()?;
-                    let lhs = self.pop_float64()?;
-                    self.trace_op(OpCode::F64Lt);
+                U64NotEqual => {
+                    let rhs = self.pop_uint64()?;
+                    let lhs = self.pop_uint64()?;
+                    self.trace_op(U64NotEqual);
+                    self.push_bool(lhs != rhs)
+                }
+                U64Less => {
+                    let rhs = self.pop_uint64()?;
+                    let lhs = self.pop_uint64()?;
+                    self.trace_op(U64Less);
                     self.push_bool(lhs < rhs)
                 }
-                OpCode::F64Gt => {
-                    let rhs = self.pop_float64()?;
-                    let lhs = self.pop_float64()?;
-                    self.trace_op(OpCode::F64Gt);
+                U64LessEqual => {
+                    let rhs = self.pop_uint64()?;
+                    let lhs = self.pop_uint64()?;
+                    self.trace_op(U64LessEqual);
+                    self.push_bool(lhs <= rhs)
+                }
+                U64Greater => {
+                    let rhs = self.pop_uint64()?;
+                    let lhs = self.pop_uint64()?;
+                    self.trace_op(U64Greater);
                     self.push_bool(lhs > rhs)
                 }
+                U64GreaterEqual => {
+                    let rhs = self.pop_uint64()?;
+                    let lhs = self.pop_uint64()?;
+                    self.trace_op(U64GreaterEqual);
+                    self.push_bool(lhs >= rhs)
+                }
 
-                OpCode::BoolNot => {
+                F64Equal => {
+                    let rhs = self.pop_float64()?;
+                    let lhs = self.pop_float64()?;
+                    self.trace_op(F64Equal);
+                    self.push_bool(lhs == rhs)
+                }
+                F64NotEqual => {
+                    let rhs = self.pop_float64()?;
+                    let lhs = self.pop_float64()?;
+                    self.trace_op(F64NotEqual);
+                    self.push_bool(lhs != rhs)
+                }
+                F64Less => {
+                    let rhs = self.pop_float64()?;
+                    let lhs = self.pop_float64()?;
+                    self.trace_op(F64Less);
+                    self.push_bool(lhs < rhs)
+                }
+                F64LessEqual => {
+                    let rhs = self.pop_float64()?;
+                    let lhs = self.pop_float64()?;
+                    self.trace_op(F64LessEqual);
+                    self.push_bool(lhs <= rhs)
+                }
+                F64Greater => {
+                    let rhs = self.pop_float64()?;
+                    let lhs = self.pop_float64()?;
+                    self.trace_op(F64Greater);
+                    self.push_bool(lhs > rhs)
+                }
+                F64GreaterEqual => {
+                    let rhs = self.pop_float64()?;
+                    let lhs = self.pop_float64()?;
+                    self.trace_op(F64GreaterEqual);
+                    self.push_bool(lhs >= rhs)
+                }
+
+                BoolNot => {
                     let b = self.pop_bool()?;
-                    self.trace_op(OpCode::BoolNot);
+                    self.trace_op(BoolNot);
                     self.push_bool(!b)
                 }
 
-                OpCode::Return => {
+                Return => {
                     let func = frame.function;
                     self.trace_call_exit(func);
                     self.pop_frame()
                 }
-                OpCode::Call => {
+                Call => {
                     let idx = frame.read_u16()?;
                     let func = self.program.get_function(idx);
                     self.trace_call_enter(func);

@@ -1,3 +1,5 @@
+use std::fmt::Display;
+
 use crate::lexer::token::Kind;
 
 #[derive(Debug, Clone, Copy, Hash, PartialEq, Eq)]
@@ -6,6 +8,13 @@ pub(crate) enum Infix {
     Minus,
     Mul,
     Div,
+
+    Equal,
+    NotEqual,
+    Less,
+    LessEqual,
+    Greater,
+    GreaterEqual,
 }
 
 impl Infix {
@@ -15,6 +24,14 @@ impl Infix {
             Kind::Minus => Infix::Minus,
             Kind::Star => Infix::Mul,
             Kind::Slash => Infix::Div,
+
+            Kind::EqualEqual => Infix::Equal,
+            Kind::BangEqual => Infix::NotEqual,
+            Kind::Less => Infix::Less,
+            Kind::LessEqual => Infix::LessEqual,
+            Kind::Greater => Infix::Greater,
+            Kind::GreaterEqual => Infix::GreaterEqual,
+
             _ => return None,
         };
 
@@ -22,10 +39,34 @@ impl Infix {
     }
 
     pub(crate) fn get_bp(&self) -> (u8, u8) {
+        use Infix::*;
+
         match &self {
-            Infix::Plus | Infix::Minus => (1, 2),
-            Infix::Mul | Infix::Div => (3, 4),
+            Equal | NotEqual | Less | LessEqual | Greater | GreaterEqual => (1, 2),
+            Plus | Minus => (3, 4),
+            Mul | Div => (5, 6),
         }
+    }
+}
+
+impl Display for Infix {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        use Infix::*;
+
+        let label = match self {
+            Plus => "+ Addition",
+            Minus => "- Subtraction",
+            Mul => "* Multiplication",
+            Div => "/ Division",
+            Equal => "== Equal Comparison",
+            NotEqual => "!= NotEqual Comparison",
+            Less => "< Less Comparison",
+            LessEqual => "<= LessEqual Comparison",
+            Greater => "> Greater Comparison",
+            GreaterEqual => ">= GreaterEqual Comparison",
+        };
+
+        f.write_str(label)
     }
 }
 
@@ -49,7 +90,21 @@ impl Prefix {
     }
 
     pub(crate) fn get_bp(&self) -> u8 {
-        5
+        7
+    }
+}
+
+impl Display for Prefix {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        use Prefix::*;
+
+        let label = match self {
+            Plus => "+ Unary Plus",
+            Minus => "- Unary Minus",
+            Negate => "! Negation",
+        };
+
+        f.write_str(label)
     }
 }
 

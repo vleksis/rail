@@ -23,6 +23,7 @@ impl<'s> Parser<'s> {
 
     fn advance(&mut self) {
         let token = self.lexer.scan_token().unwrap();
+        dbg!(&token);
         self.previous = std::mem::replace(&mut self.current, token);
     }
 

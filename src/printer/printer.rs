@@ -22,10 +22,7 @@ impl<'s> TreePrinter<'s> {
     }
 
     fn build_tree(&self, root: expression::Id) -> StringItem {
-        let root_node = self.syntax.arena.get(root);
-        let kind = &root_node.kind;
-        let label = Self::get_label(kind);
-        let mut builder = TreeBuilder::new(label);
+        let mut builder = TreeBuilder::new("ROOT".to_string());
         self.add_child(&mut builder, root);
         builder.build()
     }
@@ -37,21 +34,8 @@ impl<'s> TreePrinter<'s> {
             expression::Kind::Float64(f) => format!("Float64({f})"),
             expression::Kind::Bool(b) => format!("Bool({b})"),
             expression::Kind::Unit => "Unit".to_owned(),
-
-            expression::Kind::Infix { op, lhs: _, rhs: _ } => match op {
-                operator::Infix::Plus => "Addition".to_owned(),
-                operator::Infix::Minus => "Subtraction".to_owned(),
-                operator::Infix::Mul => "Multiplication".to_owned(),
-                operator::Infix::Div => "Division".to_owned(),
-            },
-
-            expression::Kind::Prefix { op, exp: _ } => match op {
-                operator::Prefix::Plus => {
-                    unreachable!("Prefix plus is stripped during AST creation")
-                }
-                operator::Prefix::Minus => "IntegralNegation".to_owned(),
-                operator::Prefix::Negate => "BooleanNegation".to_owned(),
-            },
+            expression::Kind::Infix { op, lhs: _, rhs: _ } => op.to_string(),
+            expression::Kind::Prefix { op, exp: _ } => op.to_string(),
         }
     }
 

@@ -59,68 +59,82 @@ impl CodeGen {
             expression::Kind::Infix { lhs, rhs, op } => {
                 self.compile_expr(arena, types, chunk, *lhs);
                 self.compile_expr(arena, types, chunk, *rhs);
+                let lty = types.get(lhs).unwrap();
+                let rty = types.get(rhs).unwrap();
 
-                match (op, ty) {
-                    (operator::Infix::Plus, Type::Int64) => {
-                        chunk.add_instruction(OpCode::I64Add, line)
-                    }
-                    (operator::Infix::Minus, Type::Int64) => {
-                        chunk.add_instruction(OpCode::I64Sub, line)
-                    }
-                    (operator::Infix::Mul, Type::Int64) => {
-                        chunk.add_instruction(OpCode::I64Mul, line)
-                    }
-                    (operator::Infix::Div, Type::Int64) => {
-                        chunk.add_instruction(OpCode::I64Div, line)
+                use OpCode::*;
+                use Type::*;
+                use operator::Infix::*;
+
+                match (lty, op, rty) {
+                    (Int64, Plus, Int64) => chunk.add_instruction(I64Add, line),
+                    (Int64, Minus, Int64) => chunk.add_instruction(I64Sub, line),
+                    (Int64, Mul, Int64) => chunk.add_instruction(I64Mul, line),
+                    (Int64, Div, Int64) => chunk.add_instruction(I64Div, line),
+
+                    (Int64, Equal, Int64) => chunk.add_instruction(I64Equal, line),
+                    (Int64, NotEqual, Int64) => chunk.add_instruction(I64NotEqual, line),
+                    (Int64, Less, Int64) => chunk.add_instruction(I64Less, line),
+                    (Int64, LessEqual, Int64) => chunk.add_instruction(I64LessEqual, line),
+                    (Int64, Greater, Int64) => chunk.add_instruction(I64Greater, line),
+                    (Int64, GreaterEqual, Int64) => chunk.add_instruction(I64GreaterEqual, line),
+
+                    (Uint64, Plus, Uint64) => chunk.add_instruction(U64Add, line),
+                    (Uint64, Minus, Uint64) => chunk.add_instruction(U64Sub, line),
+                    (Uint64, Mul, Uint64) => chunk.add_instruction(U64Mul, line),
+                    (Uint64, Div, Uint64) => chunk.add_instruction(U64Div, line),
+
+                    (Uint64, Equal, Uint64) => chunk.add_instruction(U64Equal, line),
+                    (Uint64, NotEqual, Uint64) => chunk.add_instruction(U64NotEqual, line),
+                    (Uint64, Less, Uint64) => chunk.add_instruction(U64Less, line),
+                    (Uint64, LessEqual, Uint64) => chunk.add_instruction(U64LessEqual, line),
+                    (Uint64, Greater, Uint64) => chunk.add_instruction(U64Greater, line),
+                    (Uint64, GreaterEqual, Uint64) => chunk.add_instruction(U64GreaterEqual, line),
+
+                    (Float64, Plus, Float64) => chunk.add_instruction(F64Add, line),
+                    (Float64, Minus, Float64) => chunk.add_instruction(F64Sub, line),
+                    (Float64, Mul, Float64) => chunk.add_instruction(F64Mul, line),
+                    (Float64, Div, Float64) => chunk.add_instruction(F64Div, line),
+
+                    (Float64, Equal, Float64) => chunk.add_instruction(F64Equal, line),
+                    (Float64, NotEqual, Float64) => chunk.add_instruction(F64NotEqual, line),
+                    (Float64, Less, Float64) => chunk.add_instruction(F64Less, line),
+                    (Float64, LessEqual, Float64) => chunk.add_instruction(F64LessEqual, line),
+                    (Float64, Greater, Float64) => chunk.add_instruction(F64Greater, line),
+                    (Float64, GreaterEqual, Float64) => {
+                        chunk.add_instruction(F64GreaterEqual, line)
                     }
 
-                    (operator::Infix::Plus, Type::Uint64) => {
-                        chunk.add_instruction(OpCode::U64Add, line)
-                    }
-                    (operator::Infix::Minus, Type::Uint64) => {
-                        chunk.add_instruction(OpCode::U64Sub, line)
-                    }
-                    (operator::Infix::Mul, Type::Uint64) => {
-                        chunk.add_instruction(OpCode::U64Mul, line)
-                    }
-                    (operator::Infix::Div, Type::Uint64) => {
-                        chunk.add_instruction(OpCode::U64Div, line)
-                    }
-
-                    (operator::Infix::Plus, Type::Float64) => {
-                        chunk.add_instruction(OpCode::F64Add, line)
-                    }
-                    (operator::Infix::Minus, Type::Float64) => {
-                        chunk.add_instruction(OpCode::F64Sub, line)
-                    }
-                    (operator::Infix::Mul, Type::Float64) => {
-                        chunk.add_instruction(OpCode::F64Mul, line)
-                    }
-                    (operator::Infix::Div, Type::Float64) => {
-                        chunk.add_instruction(OpCode::F64Div, line)
-                    }
-
-                    _ => unimplemented!("no codegen for {:?} with type {:?}", op, ty),
-                };
+                    _ => unimplemented!(
+                        "no codegen for {:?} with operand types {:?} and {:?}",
+                        op,
+                        lty,
+                        rty
+                    ),
+                }
             }
 
             expression::Kind::Prefix { op, exp } => {
                 self.compile_expr(arena, types, chunk, *exp);
 
+                use OpCode::*;
+                use Type::*;
+                use operator::Prefix::*;
+
                 match (op, ty) {
-                    (operator::Prefix::Plus, _) => {
+                    (Plus, _) => {
                         unreachable!("Prefix Plus is elided in ast building")
                     }
-                    (operator::Prefix::Minus, Type::Int64) => {
+                    (Minus, Int64) => {
                         chunk.add_int64(-1, line);
-                        chunk.add_instruction(OpCode::I64Mul, line);
+                        chunk.add_instruction(I64Mul, line);
                     }
-                    (operator::Prefix::Minus, Type::Float64) => {
+                    (Minus, Float64) => {
                         chunk.add_float64(-1.0, line);
-                        chunk.add_instruction(OpCode::F64Mul, line);
+                        chunk.add_instruction(F64Mul, line);
                     }
-                    (operator::Prefix::Negate, Type::Bool) => {
-                        chunk.add_instruction(OpCode::BoolNot, line);
+                    (Negate, Bool) => {
+                        chunk.add_instruction(BoolNot, line);
                     }
 
                     _ => unimplemented!("no codegen for {:?} with type {:?}", op, ty),

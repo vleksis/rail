@@ -1,8 +1,35 @@
 use std::fmt::Display;
 
-#[repr(u8)]
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub enum OpCode {
+macro_rules! define_opcodes {
+   ( $( $name:ident = $val:expr, )* ) => {
+       #[repr(u8)]
+       #[derive(Clone, Copy, Debug, PartialEq, Eq)]
+       pub enum OpCode {
+           $( $name = $val, )*
+       }
+
+       impl OpCode {
+           pub fn from_byte(byte: u8) -> Option<Self> {
+               match byte {
+                   $( $val => Some(OpCode::$name), )*
+                   _ => None,
+               }
+           }
+
+           pub fn name(&self) -> &'static str {
+               match self {
+                   $( OpCode::$name => stringify!($name), )*
+               }
+           }
+
+           pub fn to_byte(self) -> u8 {
+                self as u8
+           }
+       }
+   }
+}
+
+define_opcodes! {
     Const = 0,
     True = 1,
     False = 2,
@@ -21,131 +48,40 @@ pub enum OpCode {
     I64Sub = 31,
     I64Mul = 32,
     I64Div = 33,
+    I64Equal = 34,
+    I64NotEqual = 35,
+    I64Less = 36,
+    I64LessEqual = 37,
+    I64Greater = 38,
+    I64GreaterEqual = 39,
 
     U64Add = 40,
     U64Sub = 41,
     U64Mul = 42,
     U64Div = 43,
+    U64Equal = 44,
+    U64NotEqual = 45,
+    U64Less = 46,
+    U64LessEqual = 47,
+    U64Greater = 48,
+    U64GreaterEqual = 49,
 
     F64Add = 50,
     F64Sub = 51,
     F64Mul = 52,
     F64Div = 53,
-
-    I64Eq = 60,
-    I64Lt = 61,
-    I64Gt = 62,
-
-    F64Eq = 70,
-    F64Lt = 71,
-    F64Gt = 72,
+    F64Equal = 54,
+    F64NotEqual = 55,
+    F64Less = 56,
+    F64LessEqual = 57,
+    F64Greater = 58,
+    F64GreaterEqual = 59,
 
     BoolNot = 80,
 
     Pop = 90,
     Return = 91,
     Call = 92,
-}
-
-impl OpCode {
-    pub fn from_byte(byte: u8) -> Option<Self> {
-        let op = match byte {
-            0 => OpCode::Const,
-            1 => OpCode::True,
-            2 => OpCode::False,
-
-            10 => OpCode::GetLocal,
-            11 => OpCode::SetLocal,
-            12 => OpCode::GetGlobal,
-            13 => OpCode::SetGlobal,
-            14 => OpCode::DefineGlobal,
-
-            20 => OpCode::Jump,
-            21 => OpCode::JumpIfFalse,
-            22 => OpCode::Loop,
-
-            30 => OpCode::I64Add,
-            31 => OpCode::I64Sub,
-            32 => OpCode::I64Mul,
-            33 => OpCode::I64Div,
-
-            40 => OpCode::U64Add,
-            41 => OpCode::U64Sub,
-            42 => OpCode::U64Mul,
-            43 => OpCode::U64Div,
-
-            50 => OpCode::F64Add,
-            51 => OpCode::F64Sub,
-            52 => OpCode::F64Mul,
-            53 => OpCode::F64Div,
-
-            60 => OpCode::I64Eq,
-            61 => OpCode::I64Lt,
-            62 => OpCode::I64Gt,
-
-            70 => OpCode::F64Eq,
-            71 => OpCode::F64Lt,
-            72 => OpCode::F64Gt,
-
-            80 => OpCode::BoolNot,
-
-            90 => OpCode::Pop,
-            91 => OpCode::Return,
-
-            92 => OpCode::Call,
-
-            _ => return None,
-        };
-
-        Some(op)
-    }
-
-    pub fn name(&self) -> &'static str {
-        match self {
-            OpCode::Const => "Const",
-            OpCode::True => "True",
-            OpCode::False => "False",
-
-            OpCode::GetLocal => "GetLocal",
-            OpCode::SetLocal => "SetLocal",
-            OpCode::GetGlobal => "GetGlobal",
-            OpCode::SetGlobal => "SetGlobal",
-            OpCode::DefineGlobal => "DefineGlobal",
-
-            OpCode::Jump => "Jump",
-            OpCode::JumpIfFalse => "JumpIfFalse",
-            OpCode::Loop => "Loop",
-
-            OpCode::I64Add => "I64Add",
-            OpCode::I64Sub => "I64Sub",
-            OpCode::I64Mul => "I64Mul",
-            OpCode::I64Div => "I64Div",
-
-            OpCode::U64Add => "U64Add",
-            OpCode::U64Sub => "U64Sub",
-            OpCode::U64Mul => "U64Mul",
-            OpCode::U64Div => "U64Div",
-
-            OpCode::F64Add => "F64Add",
-            OpCode::F64Sub => "F64Sub",
-            OpCode::F64Mul => "F64Mul",
-            OpCode::F64Div => "F64Div",
-
-            OpCode::I64Eq => "I64Eq",
-            OpCode::I64Lt => "I64Lt",
-            OpCode::I64Gt => "I64Gt",
-
-            OpCode::F64Eq => "F64Eq",
-            OpCode::F64Lt => "F64Lt",
-            OpCode::F64Gt => "F64Gt",
-
-            OpCode::BoolNot => "BoolNot",
-
-            OpCode::Pop => "Pop",
-            OpCode::Return => "Return",
-            OpCode::Call => "Call",
-        }
-    }
 }
 
 impl Display for OpCode {

@@ -31,6 +31,15 @@ impl TypeEnv {
             infix.insert((Div, ty, ty), ty);
         }
 
+        for ty in [Int64, Uint64, Float64] {
+            infix.insert((Equal, ty, ty), Bool);
+            infix.insert((NotEqual, ty, ty), Bool);
+            infix.insert((Less, ty, ty), Bool);
+            infix.insert((LessEqual, ty, ty), Bool);
+            infix.insert((Greater, ty, ty), Bool);
+            infix.insert((GreaterEqual, ty, ty), Bool);
+        }
+
         infix
     }
 
