@@ -84,6 +84,12 @@ impl ASTBuilder {
         self.push(node)
     }
 
+    pub(crate) fn make_bool(&mut self, b: bool) -> Id {
+        let kind = Kind::Bool(b);
+        let node = Node { kind };
+        self.push(node)
+    }
+
     pub(crate) fn make_infix(&mut self, op: operator::Infix, lhs: Id, rhs: Id) -> Id {
         let kind = Kind::Infix { lhs, rhs, op };
         let node = Node { kind };

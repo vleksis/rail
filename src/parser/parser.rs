@@ -56,6 +56,8 @@ impl<'s> Parser<'s> {
             token::Kind::Int64Lit(i) => self.builder.make_int64(i),
             token::Kind::Uint64Lit(u) => self.builder.make_uint64(u),
             token::Kind::FloatLit(f) => self.builder.make_float64(f),
+            token::Kind::True => self.builder.make_bool(true),
+            token::Kind::False => self.builder.make_bool(false),
             token::Kind::LParen => {
                 let exp = self.parse_bp(0);
                 self.consume(token::Kind::RParen);
