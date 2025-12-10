@@ -292,6 +292,10 @@ impl<'p> Vm<'p> {
                     self.push_bool(!b)
                 }
 
+                Pop => {
+                    self.trace_op(Pop);
+                    dbg!(self.pop()).map(|_| {})
+                }
                 Return => {
                     let func = frame.function;
                     self.trace_call_exit(func);

@@ -17,7 +17,7 @@ fn main() {
     let syntax = parser.parse();
 
     let printer = TreePrinter::new(&syntax);
-    printer.print_tree();
+    printer.print();
 
     let env = TypeEnv::new();
     let typer = Typer::new(&env);

@@ -17,18 +17,35 @@ impl<'e> Typer<'e> {
     pub fn check(&self, syntax: Syntax) -> Result<Module> {
         let mut types = HashMap::new();
         let root = syntax.arena.get_root();
-        self.calculate_type(&syntax.arena, &mut types, root)?;
+        self.check_statement(&syntax.arena, &mut types, root)?;
         let module = Module { syntax, types };
         Ok(module)
     }
 
-    fn calculate_type(
+    fn check_statement(
         &self,
-        arena: &expression::Arena,
+        arena: &Arena,
+        types: &mut HashMap<expression::Id, Type>,
+        id: statement::Id,
+    ) -> Result<()> {
+        use statement::Kind::*;
+
+        let kind = &arena.get_statement(id).kind;
+        match kind {
+            Expression(exp) => self.calculate_expression_type(arena, types, *exp)?,
+            _ => unimplemented!(),
+        };
+
+        Ok(())
+    }
+
+    fn calculate_expression_type(
+        &self,
+        arena: &Arena,
         types: &mut HashMap<expression::Id, Type>,
         id: expression::Id,
     ) -> Result<Type> {
-        let kind = &arena.get(id).kind;
+        let kind = &arena.get_expression(id).kind;
         let ty = match kind {
             expression::Kind::Int64(_) => Type::Int64,
             expression::Kind::Uint64(_) => Type::Uint64,
@@ -36,12 +53,12 @@ impl<'e> Typer<'e> {
             expression::Kind::Bool(_) => Type::Bool,
             expression::Kind::Unit => Type::Unit,
             expression::Kind::Infix { lhs, rhs, op } => {
-                let lty = self.calculate_type(arena, types, *lhs)?;
-                let rty = self.calculate_type(arena, types, *rhs)?;
+                let lty = self.calculate_expression_type(arena, types, *lhs)?;
+                let rty = self.calculate_expression_type(arena, types, *rhs)?;
                 self.env.resolve_infix(*op, lty, rty)?
             }
             expression::Kind::Prefix { op, exp } => {
-                let ty = self.calculate_type(arena, types, *exp)?;
+                let ty = self.calculate_expression_type(arena, types, *exp)?;
                 self.env.resolve_prefix(*op, ty)?
             }
         };

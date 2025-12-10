@@ -1,12 +1,12 @@
 use crate::{
-    grammar::{expression::ASTBuilder, *},
+    grammar::*,
     lexer::Lexer,
     lexer::{Token, token},
 };
 
 pub struct Parser<'s> {
     lexer: Lexer<'s>,
-    builder: ASTBuilder,
+    arena: Arena,
     previous: Token<'s>,
     current: Token<'s>,
 }
@@ -15,7 +15,7 @@ impl<'s> Parser<'s> {
     pub fn new(lexer: Lexer<'s>) -> Self {
         Self {
             lexer,
-            builder: ASTBuilder::default(),
+            arena: Arena::default(),
             previous: Token::default(),
             current: Token::default(),
         }
@@ -37,27 +37,40 @@ impl<'s> Parser<'s> {
     }
 
     pub fn parse(mut self) -> Syntax {
-        self.parse_expression();
+        self.advance();
+        let stmt = self.parse_statement();
+        self.arena.set_root(stmt);
+        Syntax { arena: self.arena }
+    }
 
-        Syntax {
-            arena: self.builder.arena,
+    fn parse_statement(&mut self) -> statement::Id {
+        match self.previous.get_kind() {
+            token::Kind::LBrace => self.parse_block(),
+            token::Kind::Let => unimplemented!(),
+            _ => {
+                let expr = self.parse_expression();
+                self.consume(token::Kind::Semicolon);
+                self.arena.push_epxression_statement(expr)
+            }
         }
     }
 
-    fn parse_expression(&mut self) {
-        self.advance();
-        let exp = self.parse_bp(0);
-        self.builder.arena.set_root(exp);
+    fn parse_block(&mut self) -> statement::Id {
+        unimplemented!()
+    }
+
+    fn parse_expression(&mut self) -> expression::Id {
+        self.parse_bp(0)
     }
 
     fn parse_lhs(&mut self) -> expression::Id {
         self.advance();
         match self.previous.get_kind() {
-            token::Kind::Int64Lit(i) => self.builder.make_int64(i),
-            token::Kind::Uint64Lit(u) => self.builder.make_uint64(u),
-            token::Kind::FloatLit(f) => self.builder.make_float64(f),
-            token::Kind::True => self.builder.make_bool(true),
-            token::Kind::False => self.builder.make_bool(false),
+            token::Kind::Int64Lit(i) => self.arena.make_int64(i),
+            token::Kind::Uint64Lit(u) => self.arena.make_uint64(u),
+            token::Kind::FloatLit(f) => self.arena.make_float64(f),
+            token::Kind::True => self.arena.make_bool(true),
+            token::Kind::False => self.arena.make_bool(false),
             token::Kind::LParen => {
                 let exp = self.parse_bp(0);
                 self.consume(token::Kind::RParen);
@@ -67,7 +80,7 @@ impl<'s> Parser<'s> {
                 if let Some(op) = operator::Prefix::get(t) {
                     let rbp = op.get_bp();
                     let exp = self.parse_bp(rbp);
-                    self.builder.make_prefix(op, exp)
+                    self.arena.make_prefix(op, exp)
                 } else {
                     panic!("Unexpected TokenKind: {t:?}");
                 }
@@ -88,7 +101,7 @@ impl<'s> Parser<'s> {
                 }
 
                 self.advance();
-                lhs = self.builder.make_postfix(op, lhs);
+                lhs = self.arena.make_postfix(op, lhs);
                 continue;
             }
 
@@ -100,12 +113,12 @@ impl<'s> Parser<'s> {
 
                 self.advance();
                 let rhs = self.parse_bp(rbp);
-                lhs = self.builder.make_infix(op, lhs, rhs);
+                lhs = self.arena.make_infix(op, lhs, rhs);
                 continue;
             }
 
             match op {
-                token::Kind::EOF | token::Kind::RParen => break,
+                token::Kind::EOF | token::Kind::RParen | token::Kind::Semicolon => break,
                 _ => {
                     panic!("Unexpected operation: {op:?}");
                 }

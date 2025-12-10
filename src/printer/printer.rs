@@ -4,27 +4,22 @@ use crate::grammar::*;
 
 pub struct TreePrinter<'s> {
     syntax: &'s Syntax,
+    builder: TreeBuilder,
 }
 
 impl<'s> TreePrinter<'s> {
     pub fn new(syntax: &'s Syntax) -> Self {
-        Self { syntax }
+        Self {
+            syntax,
+            builder: TreeBuilder::new("ROOT".to_owned()),
+        }
     }
 
-    pub fn print_tree(&self) {
+    pub fn print(mut self) {
         let root = self.syntax.arena.get_root();
-        self.print_expr(root);
-    }
-
-    fn print_expr(&self, root: expression::Id) {
-        let tree = self.build_tree(root);
-        print_tree(&tree).unwrap()
-    }
-
-    fn build_tree(&self, root: expression::Id) -> StringItem {
-        let mut builder = TreeBuilder::new("ROOT".to_string());
-        self.add_child(&mut builder, root);
-        builder.build()
+        self.add_statement(root);
+        let tree = self.builder.build();
+        print_tree(&tree).unwrap();
     }
 
     fn get_label(kind: &expression::Kind) -> String {
@@ -39,28 +34,40 @@ impl<'s> TreePrinter<'s> {
         }
     }
 
-    fn add_child(&self, builder: &mut TreeBuilder, id: expression::Id) {
-        let kind = &self.syntax.arena.get(id).kind;
+    fn add_expression(&mut self, id: expression::Id) {
+        use expression::Kind::*;
+
+        let kind = &self.syntax.arena.get_expression(id).kind;
         let label = TreePrinter::get_label(kind);
-        builder.begin_child(label);
+        self.builder.begin_child(label);
 
         match kind {
-            expression::Kind::Int64(_)
-            | expression::Kind::Uint64(_)
-            | expression::Kind::Float64(_)
-            | expression::Kind::Bool(_)
-            | expression::Kind::Unit => (),
+            Int64(_) | Uint64(_) | Float64(_) | Bool(_) | Unit => (),
 
-            expression::Kind::Infix { lhs, rhs, op: _ } => {
-                self.add_child(builder, *lhs);
-                self.add_child(builder, *rhs);
+            Infix { lhs, rhs, op: _ } => {
+                self.add_expression(*lhs);
+                self.add_expression(*rhs);
             }
 
-            expression::Kind::Prefix { exp, op: _ } => {
-                self.add_child(builder, *exp);
+            Prefix { exp, op: _ } => {
+                self.add_expression(*exp);
             }
         };
 
-        builder.end_child();
+        self.builder.end_child();
+    }
+
+    fn add_statement(&mut self, id: statement::Id) {
+        use statement::Kind::*;
+
+        let kind = &self.syntax.arena.get_statement(id).kind;
+        self.builder.begin_child("statement".to_owned());
+
+        match kind {
+            Expression(exp) => self.add_expression(*exp),
+            _ => unimplemented!(),
+        };
+
+        self.builder.end_child();
     }
 }

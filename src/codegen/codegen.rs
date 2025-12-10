@@ -17,7 +17,7 @@ impl CodeGen {
     pub fn compile(&mut self, module: Module) -> Program {
         let mut chunk = Chunk::new();
 
-        self.compile_expr(
+        self.compile_statement(
             &module.syntax.arena,
             &module.types,
             &mut chunk,
@@ -38,31 +38,56 @@ impl CodeGen {
         program
     }
 
+    fn compile_statement(
+        &mut self,
+        arena: &Arena,
+        types: &HashMap<expression::Id, Type>,
+        chunk: &mut Chunk,
+        id: statement::Id,
+    ) {
+        use OpCode::*;
+        use statement::Kind::*;
+
+        let node = arena.get_statement(id);
+        let kind = &node.kind;
+        let line = 42;
+
+        match kind {
+            Expression(exp) => {
+                self.compile_expr(arena, types, chunk, *exp);
+                chunk.add_instruction(Pop, line);
+            }
+            _ => unimplemented!(),
+        };
+    }
+
     fn compile_expr(
         &mut self,
-        arena: &expression::Arena,
+        arena: &Arena,
         types: &HashMap<expression::Id, Type>,
         chunk: &mut Chunk,
         id: expression::Id,
     ) {
-        let node = arena.get(id);
+        use OpCode::*;
+        use expression::Kind::*;
+
+        let node = arena.get_expression(id);
         let kind = &node.kind;
         let ty = types.get(&id).unwrap();
         let line = 42;
 
         match kind {
-            expression::Kind::Int64(i) => chunk.add_int64(*i, line),
-            expression::Kind::Uint64(u) => chunk.add_uint64(*u, line),
-            expression::Kind::Float64(f) => chunk.add_float64(*f, line),
-            expression::Kind::Bool(b) => chunk.add_bool(*b, line),
+            Int64(i) => chunk.add_int64(*i, line),
+            Uint64(u) => chunk.add_uint64(*u, line),
+            Float64(f) => chunk.add_float64(*f, line),
+            Bool(b) => chunk.add_bool(*b, line),
 
-            expression::Kind::Infix { lhs, rhs, op } => {
+            Infix { lhs, rhs, op } => {
                 self.compile_expr(arena, types, chunk, *lhs);
                 self.compile_expr(arena, types, chunk, *rhs);
                 let lty = types.get(lhs).unwrap();
                 let rty = types.get(rhs).unwrap();
 
-                use OpCode::*;
                 use Type::*;
                 use operator::Infix::*;
 
@@ -114,7 +139,7 @@ impl CodeGen {
                 }
             }
 
-            expression::Kind::Prefix { op, exp } => {
+            Prefix { op, exp } => {
                 self.compile_expr(arena, types, chunk, *exp);
 
                 use OpCode::*;
