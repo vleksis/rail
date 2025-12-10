@@ -1,19 +1,16 @@
+use super::*;
 use crate::bytecode::OpCode;
-use crate::runtime::function::Function;
-use crate::runtime::program::Program;
-use crate::runtime::value::Value;
-use crate::vm::call_frame::CallFrame;
-use crate::vm::error::{Result, VmError};
+use crate::runtime::*;
 
 #[derive(Debug)]
-pub struct VM<'p> {
+pub struct Vm<'p> {
     program: &'p Program,
     frames: Vec<CallFrame<'p>>,
     stack: Vec<Value>,
     // memory: Vec<Object>,
 }
 
-impl<'p> VM<'p> {
+impl<'p> Vm<'p> {
     pub fn from(program: &'p Program) -> Self {
         Self {
             program,
@@ -23,43 +20,39 @@ impl<'p> VM<'p> {
         }
     }
 
-    fn current_frame(&self) -> Result<&CallFrame<'p>> {
-        self.frames.last().ok_or(VmError::StackUnderflow)
-    }
-
     fn current_frame_mut(&mut self) -> Result<&mut CallFrame<'p>> {
-        self.frames.last_mut().ok_or(VmError::StackUnderflow)
+        self.frames.last_mut().ok_or(Error::StackUnderflow)
     }
 
     pub fn pop(&mut self) -> Result<Value> {
-        self.stack.pop().ok_or(VmError::StackUnderflow)
+        self.stack.pop().ok_or(Error::StackUnderflow)
     }
     pub fn pop_bool(&mut self) -> Result<bool> {
         let value = self.pop()?;
         match value {
             Value::Bool(b) => Ok(b),
-            _ => Err(VmError::TypeMismatch("Expected bool")),
+            _ => Err(Error::TypeMismatch("Expected bool")),
         }
     }
     pub fn pop_int64(&mut self) -> Result<i64> {
         let value = self.pop()?;
         match value {
             Value::Int64(i) => Ok(i),
-            _ => Err(VmError::TypeMismatch("Expected int64")),
+            _ => Err(Error::TypeMismatch("Expected int64")),
         }
     }
     pub fn pop_uint64(&mut self) -> Result<u64> {
         let value = self.pop()?;
         match value {
             Value::Uint64(u) => Ok(u),
-            _ => Err(VmError::TypeMismatch("Expected uint64")),
+            _ => Err(Error::TypeMismatch("Expected uint64")),
         }
     }
     pub fn pop_float64(&mut self) -> Result<f64> {
         let value = self.pop()?;
         match value {
             Value::Float64(f) => Ok(f),
-            _ => Err(VmError::TypeMismatch("Expected float64")),
+            _ => Err(Error::TypeMismatch("Expected float64")),
         }
     }
 
@@ -83,7 +76,7 @@ impl<'p> VM<'p> {
     fn pop_frame(&mut self) -> Result<()> {
         match self.frames.pop() {
             Some(_) => Ok(()),
-            None => Err(VmError::StackUnderflow),
+            None => Err(Error::StackUnderflow),
         }
     }
     fn push_frame(&mut self, function: &'p Function) -> Result<()> {
@@ -247,12 +240,12 @@ impl<'p> VM<'p> {
         let value = dbg!(self.pop())?;
         match value {
             Value::Int64(i) => Ok(i),
-            _ => Err(VmError::TypeMismatch("Expected int64")),
+            _ => Err(Error::TypeMismatch("Expected int64")),
         }
     }
 }
 
-impl<'p> VM<'p> {
+impl<'p> Vm<'p> {
     fn trace_op(&self, _op: OpCode) {
         #[cfg(feature = "trace_vm")]
         {
@@ -288,7 +281,7 @@ mod tests {
     use crate::bytecode::opcode::OpCode;
     use crate::runtime::function::Function;
     use crate::runtime::program::Program;
-    use crate::vm::vm::VM;
+    use crate::vm::vm::Vm;
 
     #[test]
     fn i64_add_two_consts() {
@@ -308,7 +301,7 @@ mod tests {
         program.functions.push(main_fn);
         program.entry = 0;
 
-        let mut vm = VM::from(&program);
+        let mut vm = Vm::from(&program);
         let result = vm.run().expect("vm run failed");
 
         assert_eq!(result, 11);

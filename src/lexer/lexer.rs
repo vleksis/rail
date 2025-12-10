@@ -1,5 +1,4 @@
-use crate::lexer::error::{LexError, Result};
-use crate::lexer::token::{Token, TokenKind};
+use super::*;
 
 pub struct Lexer<'s> {
     source: &'s str,
@@ -50,15 +49,6 @@ impl<'s> Lexer<'s> {
 
     fn peek(&self) -> Option<char> {
         self.source[self.current_byte..].chars().next()
-    }
-
-    fn peek_next(&self) -> Option<char> {
-        if self.is_at_end() {
-            return None;
-        }
-        let cur = self.peek().unwrap();
-        let next_byte = self.current_byte + cur.len_utf8();
-        self.source[next_byte..].chars().next()
     }
 
     fn is_at_end(&self) -> bool {
@@ -115,98 +105,98 @@ impl<'s> Lexer<'s> {
         self.start = self.current_byte;
 
         if self.is_at_end() {
-            return Ok(self.make_token(TokenKind::EOF));
+            return Ok(self.make_token(Kind::EOF));
         }
 
         let ch = self.advance().expect("not empty is checked");
 
         let result = match ch {
-            '(' => self.make_token(TokenKind::LParen),
-            ')' => self.make_token(TokenKind::RParen),
-            '{' => self.make_token(TokenKind::LBrace),
-            '}' => self.make_token(TokenKind::RBrace),
-            ';' => self.make_token(TokenKind::Semicolon),
-            ',' => self.make_token(TokenKind::Comma),
-            ':' => self.make_token(TokenKind::Colon),
-            '.' => self.make_token(TokenKind::Dot),
+            '(' => self.make_token(Kind::LParen),
+            ')' => self.make_token(Kind::RParen),
+            '{' => self.make_token(Kind::LBrace),
+            '}' => self.make_token(Kind::RBrace),
+            ';' => self.make_token(Kind::Semicolon),
+            ',' => self.make_token(Kind::Comma),
+            ':' => self.make_token(Kind::Colon),
+            '.' => self.make_token(Kind::Dot),
 
             '+' => {
                 if self.match_token('=') {
-                    self.make_token(TokenKind::PlusEqual)
+                    self.make_token(Kind::PlusEqual)
                 } else {
-                    self.make_token(TokenKind::Plus)
+                    self.make_token(Kind::Plus)
                 }
             }
             '-' => {
                 if self.match_token('=') {
-                    self.make_token(TokenKind::MinusEqual)
+                    self.make_token(Kind::MinusEqual)
                 } else if self.match_token('>') {
-                    self.make_token(TokenKind::Arrow)
+                    self.make_token(Kind::Arrow)
                 } else {
-                    self.make_token(TokenKind::Minus)
+                    self.make_token(Kind::Minus)
                 }
             }
             '*' => {
                 if self.match_token('=') {
-                    self.make_token(TokenKind::StarEqual)
+                    self.make_token(Kind::StarEqual)
                 } else {
-                    self.make_token(TokenKind::Star)
+                    self.make_token(Kind::Star)
                 }
             }
             '/' => {
                 if self.match_token('=') {
-                    self.make_token(TokenKind::SlashEqual)
+                    self.make_token(Kind::SlashEqual)
                 } else if self.match_token('/') {
                     self.scan_comment()
                 } else {
-                    self.make_token(TokenKind::Slash)
+                    self.make_token(Kind::Slash)
                 }
             }
             '%' => {
                 if self.match_token('=') {
-                    self.make_token(TokenKind::PercentEqual)
+                    self.make_token(Kind::PercentEqual)
                 } else {
-                    self.make_token(TokenKind::Percent)
+                    self.make_token(Kind::Percent)
                 }
             }
             '!' => {
                 if self.match_token('=') {
-                    self.make_token(TokenKind::BangEqual)
+                    self.make_token(Kind::BangEqual)
                 } else {
-                    self.make_token(TokenKind::Bang)
+                    self.make_token(Kind::Bang)
                 }
             }
             '=' => {
                 if self.match_token('=') {
-                    self.make_token(TokenKind::EqualEqual)
+                    self.make_token(Kind::EqualEqual)
                 } else {
-                    self.make_token(TokenKind::Equal)
+                    self.make_token(Kind::Equal)
                 }
             }
             '<' => {
                 if self.match_token('=') {
-                    self.make_token(TokenKind::LessEqual)
+                    self.make_token(Kind::LessEqual)
                 } else {
-                    self.make_token(TokenKind::Less)
+                    self.make_token(Kind::Less)
                 }
             }
             '>' => {
                 if self.match_token('=') {
-                    self.make_token(TokenKind::GreaterEqual)
+                    self.make_token(Kind::GreaterEqual)
                 } else {
-                    self.make_token(TokenKind::Greater)
+                    self.make_token(Kind::Greater)
                 }
             }
             '&' => {
                 if self.match_token('&') {
-                    self.make_token(TokenKind::AndAnd)
+                    self.make_token(Kind::AndAnd)
                 } else {
                     return Err(self.make_error("Impossible &"));
                 }
             }
             '|' => {
                 if self.match_token('|') {
-                    self.make_token(TokenKind::OrOr)
+                    self.make_token(Kind::OrOr)
                 } else {
                     return Err(self.make_error("Impossible |"));
                 }
@@ -229,7 +219,7 @@ impl<'s> Lexer<'s> {
         while line == self.line {
             self.advance();
         }
-        self.make_token(TokenKind::LineComment)
+        self.make_token(Kind::LineComment)
     }
 
     fn scan_number_prefix(&mut self) -> NumberPrefix {
@@ -274,17 +264,17 @@ impl<'s> Lexer<'s> {
     }
 
     fn scan_numeric(&mut self) -> Token<'s> {
-        let pref = self.scan_number_prefix();
+        let _ = self.scan_number_prefix();
         let has_dot = self.scan_number_core();
         let num = self.get_text();
         let post = self.scan_number_postfix();
         let kind = match post {
-            NumberPostfix::Int64 => TokenKind::Int64Lit(num.parse().unwrap()),
-            NumberPostfix::Uint64 => TokenKind::Uint64Lit(num.parse().unwrap()),
-            NumberPostfix::Float64 => TokenKind::FloatLit(num.parse().unwrap()),
+            NumberPostfix::Int64 => Kind::Int64Lit(num.parse().unwrap()),
+            NumberPostfix::Uint64 => Kind::Uint64Lit(num.parse().unwrap()),
+            NumberPostfix::Float64 => Kind::FloatLit(num.parse().unwrap()),
             NumberPostfix::None => match has_dot {
-                true => TokenKind::FloatLit(num.parse().unwrap()),
-                false => TokenKind::Int64Lit(num.parse().unwrap()),
+                true => Kind::FloatLit(num.parse().unwrap()),
+                false => Kind::Int64Lit(num.parse().unwrap()),
             },
         };
 
@@ -296,26 +286,25 @@ impl<'s> Lexer<'s> {
             self.advance();
         }
         let text = self.get_text();
-        self.make_token(TokenKind::ident_or_keyword(text))
+        self.make_token(Kind::ident_or_keyword(text))
     }
 
     fn get_text(&self) -> &'s str {
         &self.source[self.start..self.current_byte]
     }
 
-    fn make_token(&self, kind: TokenKind) -> Token<'s> {
-        let text = &self.source[self.start..self.current_byte];
+    fn make_token(&self, kind: Kind) -> Token<'s> {
         Token {
             kind,
-            text,
+            text: self.get_text(),
             line: self.line,
             byte: self.start,
         }
     }
 
-    fn make_error(&self, message: &str) -> LexError {
+    fn make_error(&self, message: &str) -> Error {
         eprintln!("{message}");
-        LexError {}
+        Error {}
     }
 }
 
@@ -332,35 +321,35 @@ mod test {
                     && ||",
         );
 
-        assert_eq!(lex.scan_token()?.kind, TokenKind::LParen);
-        assert_eq!(lex.scan_token()?.kind, TokenKind::RParen);
-        assert_eq!(lex.scan_token()?.kind, TokenKind::LBrace);
-        assert_eq!(lex.scan_token()?.kind, TokenKind::RBrace);
-        assert_eq!(lex.scan_token()?.kind, TokenKind::Comma);
-        assert_eq!(lex.scan_token()?.kind, TokenKind::Colon);
-        assert_eq!(lex.scan_token()?.kind, TokenKind::Semicolon);
-        assert_eq!(lex.scan_token()?.kind, TokenKind::Dot);
-        assert_eq!(lex.scan_token()?.kind, TokenKind::Plus);
-        assert_eq!(lex.scan_token()?.kind, TokenKind::PlusEqual);
-        assert_eq!(lex.scan_token()?.kind, TokenKind::Minus);
-        assert_eq!(lex.scan_token()?.kind, TokenKind::MinusEqual);
-        assert_eq!(lex.scan_token()?.kind, TokenKind::Star);
-        assert_eq!(lex.scan_token()?.kind, TokenKind::StarEqual);
-        assert_eq!(lex.scan_token()?.kind, TokenKind::Slash);
-        assert_eq!(lex.scan_token()?.kind, TokenKind::SlashEqual);
-        assert_eq!(lex.scan_token()?.kind, TokenKind::Percent);
-        assert_eq!(lex.scan_token()?.kind, TokenKind::PercentEqual);
-        assert_eq!(lex.scan_token()?.kind, TokenKind::Bang);
-        assert_eq!(lex.scan_token()?.kind, TokenKind::BangEqual);
-        assert_eq!(lex.scan_token()?.kind, TokenKind::Equal);
-        assert_eq!(lex.scan_token()?.kind, TokenKind::EqualEqual);
-        assert_eq!(lex.scan_token()?.kind, TokenKind::Less);
-        assert_eq!(lex.scan_token()?.kind, TokenKind::LessEqual);
-        assert_eq!(lex.scan_token()?.kind, TokenKind::Greater);
-        assert_eq!(lex.scan_token()?.kind, TokenKind::GreaterEqual);
-        assert_eq!(lex.scan_token()?.kind, TokenKind::AndAnd);
-        assert_eq!(lex.scan_token()?.kind, TokenKind::OrOr);
-        assert_eq!(lex.scan_token()?.kind, TokenKind::EOF);
+        assert_eq!(lex.scan_token()?.kind, Kind::LParen);
+        assert_eq!(lex.scan_token()?.kind, Kind::RParen);
+        assert_eq!(lex.scan_token()?.kind, Kind::LBrace);
+        assert_eq!(lex.scan_token()?.kind, Kind::RBrace);
+        assert_eq!(lex.scan_token()?.kind, Kind::Comma);
+        assert_eq!(lex.scan_token()?.kind, Kind::Colon);
+        assert_eq!(lex.scan_token()?.kind, Kind::Semicolon);
+        assert_eq!(lex.scan_token()?.kind, Kind::Dot);
+        assert_eq!(lex.scan_token()?.kind, Kind::Plus);
+        assert_eq!(lex.scan_token()?.kind, Kind::PlusEqual);
+        assert_eq!(lex.scan_token()?.kind, Kind::Minus);
+        assert_eq!(lex.scan_token()?.kind, Kind::MinusEqual);
+        assert_eq!(lex.scan_token()?.kind, Kind::Star);
+        assert_eq!(lex.scan_token()?.kind, Kind::StarEqual);
+        assert_eq!(lex.scan_token()?.kind, Kind::Slash);
+        assert_eq!(lex.scan_token()?.kind, Kind::SlashEqual);
+        assert_eq!(lex.scan_token()?.kind, Kind::Percent);
+        assert_eq!(lex.scan_token()?.kind, Kind::PercentEqual);
+        assert_eq!(lex.scan_token()?.kind, Kind::Bang);
+        assert_eq!(lex.scan_token()?.kind, Kind::BangEqual);
+        assert_eq!(lex.scan_token()?.kind, Kind::Equal);
+        assert_eq!(lex.scan_token()?.kind, Kind::EqualEqual);
+        assert_eq!(lex.scan_token()?.kind, Kind::Less);
+        assert_eq!(lex.scan_token()?.kind, Kind::LessEqual);
+        assert_eq!(lex.scan_token()?.kind, Kind::Greater);
+        assert_eq!(lex.scan_token()?.kind, Kind::GreaterEqual);
+        assert_eq!(lex.scan_token()?.kind, Kind::AndAnd);
+        assert_eq!(lex.scan_token()?.kind, Kind::OrOr);
+        assert_eq!(lex.scan_token()?.kind, Kind::EOF);
 
         Ok(())
     }

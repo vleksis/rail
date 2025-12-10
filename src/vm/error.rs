@@ -1,7 +1,7 @@
 use thiserror::Error;
 
 #[derive(Debug, Error)]
-pub enum VmError {
+pub enum Error {
     #[error("stack underflow")]
     StackUnderflow,
     #[error("type mismatch: {0}")]
@@ -14,4 +14,4 @@ pub enum VmError {
     InvalidOpCode,
 }
 
-pub type Result<T> = std::result::Result<T, VmError>;
+pub type Result<T> = std::result::Result<T, Error>;

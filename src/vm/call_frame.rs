@@ -1,8 +1,6 @@
+use super::*;
 use crate::bytecode::OpCode;
-use crate::runtime::function::{self, Function};
-use crate::runtime::object::ObjRef;
-use crate::runtime::value::Value;
-use crate::vm::error::{Result, VmError};
+use crate::runtime::*;
 
 #[derive(Debug)]
 pub struct CallFrame<'p> {
@@ -23,17 +21,17 @@ impl<'p> CallFrame<'p> {
     /// Read OpCode at the current ip and advance ip.
     pub fn read_opcode(&mut self) -> Result<OpCode> {
         if self.ip >= self.function.chunk.len() {
-            return Err(VmError::InvalidJumpTarget);
+            return Err(Error::InvalidJumpTarget);
         }
         let byte = self.function.chunk.get_byte(self.ip);
         self.ip += 1;
-        OpCode::from_byte(byte).ok_or(VmError::InvalidOpCode)
+        OpCode::from_byte(byte).ok_or(Error::InvalidOpCode)
     }
 
     /// Read a big-endian u16 operand starting at the current ip and advance ip.
     pub fn read_u16(&mut self) -> Result<u16> {
         if self.ip + 1 >= self.function.chunk.len() {
-            return Err(VmError::InvalidJumpTarget);
+            return Err(Error::InvalidJumpTarget);
         }
         let hi = self.function.chunk.get_byte(self.ip) as u16;
         let lo = self.function.chunk.get_byte(self.ip + 1) as u16;

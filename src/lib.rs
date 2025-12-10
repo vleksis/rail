@@ -1,5 +1,11 @@
-pub mod ast;
 pub mod bytecode;
+pub mod codegen;
+pub mod grammar;
 pub mod lexer;
+pub mod module;
+pub mod parser;
+pub mod printer;
 pub mod runtime;
+pub mod semantic;
+pub mod typechecker;
 pub mod vm;

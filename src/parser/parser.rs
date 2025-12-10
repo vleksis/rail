@@ -1,23 +1,12 @@
-use thiserror::Error;
-
 use crate::{
-    ast::{
-        node::{ASTBuilder, ExpressionId, ExpressionNode},
-        op::{InfixOperator, PostfixOperator, PrefixOperator},
-    },
-    lexer::{
-        lexer::Lexer,
-        token::{Token, TokenKind},
-    },
+    grammar::{expression::ASTBuilder, *},
+    lexer::Lexer,
+    lexer::{Token, token},
 };
-
-#[derive(Debug, Error)]
-#[error("Parsing error")]
-pub struct ParseError {}
 
 pub struct Parser<'s> {
     lexer: Lexer<'s>,
-    pub builder: ASTBuilder,
+    builder: ASTBuilder,
     previous: Token<'s>,
     current: Token<'s>,
 }
@@ -37,7 +26,7 @@ impl<'s> Parser<'s> {
         self.previous = std::mem::replace(&mut self.current, token);
     }
 
-    fn consume(&mut self, kind: TokenKind) {
+    fn consume(&mut self, kind: token::Kind) {
         dbg!(kind);
         if self.current.get_kind() == kind {
             self.advance();
@@ -46,24 +35,33 @@ impl<'s> Parser<'s> {
         }
     }
 
-    pub fn parse_expression(&mut self) -> ExpressionId {
-        self.advance();
-        self.parse_bp(0)
+    pub fn parse(mut self) -> Syntax {
+        self.parse_expression();
+
+        Syntax {
+            arena: self.builder.arena,
+        }
     }
 
-    fn parse_lhs(&mut self) -> ExpressionId {
+    fn parse_expression(&mut self) {
+        self.advance();
+        let exp = self.parse_bp(0);
+        self.builder.arena.set_root(exp);
+    }
+
+    fn parse_lhs(&mut self) -> expression::Id {
         self.advance();
         match self.previous.get_kind() {
-            TokenKind::Int64Lit(i) => self.builder.make_int64(i),
-            TokenKind::Uint64Lit(u) => self.builder.make_uint64(u),
-            TokenKind::FloatLit(f) => self.builder.make_float64(f),
-            TokenKind::LParen => {
+            token::Kind::Int64Lit(i) => self.builder.make_int64(i),
+            token::Kind::Uint64Lit(u) => self.builder.make_uint64(u),
+            token::Kind::FloatLit(f) => self.builder.make_float64(f),
+            token::Kind::LParen => {
                 let exp = self.parse_bp(0);
-                self.consume(TokenKind::RParen);
+                self.consume(token::Kind::RParen);
                 exp
             }
             t => {
-                if let Some(op) = PrefixOperator::get(t) {
+                if let Some(op) = operator::Prefix::get(t) {
                     let rbp = op.get_bp();
                     let exp = self.parse_bp(rbp);
                     self.builder.make_prefix(op, exp)
@@ -74,13 +72,13 @@ impl<'s> Parser<'s> {
         }
     }
 
-    fn parse_bp(&mut self, bp: u8) -> ExpressionId {
+    fn parse_bp(&mut self, bp: u8) -> expression::Id {
         let mut lhs = self.parse_lhs();
 
         loop {
             let op = self.current.get_kind();
 
-            if let Some(op) = PostfixOperator::get(op) {
+            if let Some(op) = operator::Postfix::get(op) {
                 let lbp = op.get_bp();
                 if lbp < bp {
                     break;
@@ -91,7 +89,7 @@ impl<'s> Parser<'s> {
                 continue;
             }
 
-            if let Some(op) = InfixOperator::get(op) {
+            if let Some(op) = operator::Infix::get(op) {
                 let (lbp, rbp) = op.get_bp();
                 if lbp < bp {
                     break;
@@ -104,7 +102,7 @@ impl<'s> Parser<'s> {
             }
 
             match op {
-                TokenKind::EOF | TokenKind::RParen => break,
+                token::Kind::EOF | token::Kind::RParen => break,
                 _ => {
                     panic!("Unexpected operation: {op:?}");
                 }
