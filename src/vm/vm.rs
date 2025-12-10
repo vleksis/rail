@@ -164,6 +164,30 @@ impl<'p> Vm<'p> {
                     self.push_bool(lhs >= rhs)
                 }
 
+                OpCode::U64Add => {
+                    let rhs = self.pop_uint64()?;
+                    let lhs = self.pop_uint64()?;
+                    self.trace_op(OpCode::U64Add);
+                    self.push_uint64(lhs + rhs)
+                }
+                OpCode::U64Sub => {
+                    let rhs = self.pop_uint64()?;
+                    let lhs = self.pop_uint64()?;
+                    self.trace_op(OpCode::U64Sub);
+                    self.push_uint64(lhs - rhs)
+                }
+                OpCode::U64Mul => {
+                    let rhs = self.pop_uint64()?;
+                    let lhs = self.pop_uint64()?;
+                    self.trace_op(OpCode::U64Mul);
+                    self.push_uint64(lhs * rhs)
+                }
+                OpCode::U64Div => {
+                    let rhs = self.pop_uint64()?;
+                    let lhs = self.pop_uint64()?;
+                    self.trace_op(OpCode::U64Div);
+                    self.push_uint64(lhs / rhs)
+                }
                 U64Equal => {
                     let rhs = self.pop_uint64()?;
                     let lhs = self.pop_uint64()?;
@@ -201,6 +225,30 @@ impl<'p> Vm<'p> {
                     self.push_bool(lhs >= rhs)
                 }
 
+                OpCode::F64Add => {
+                    let rhs = self.pop_float64()?;
+                    let lhs = self.pop_float64()?;
+                    self.trace_op(OpCode::F64Add);
+                    self.push_float64(lhs + rhs)
+                }
+                OpCode::F64Sub => {
+                    let rhs = self.pop_float64()?;
+                    let lhs = self.pop_float64()?;
+                    self.trace_op(OpCode::F64Sub);
+                    self.push_float64(lhs - rhs)
+                }
+                OpCode::F64Mul => {
+                    let rhs = self.pop_float64()?;
+                    let lhs = self.pop_float64()?;
+                    self.trace_op(OpCode::F64Mul);
+                    self.push_float64(lhs * rhs)
+                }
+                OpCode::F64Div => {
+                    let rhs = self.pop_float64()?;
+                    let lhs = self.pop_float64()?;
+                    self.trace_op(OpCode::F64Div);
+                    self.push_float64(lhs / rhs)
+                }
                 F64Equal => {
                     let rhs = self.pop_float64()?;
                     let lhs = self.pop_float64()?;
