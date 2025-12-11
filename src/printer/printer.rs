@@ -61,7 +61,13 @@ impl<'s> TreePrinter<'s> {
         use statement::Kind::*;
 
         let kind = &self.syntax.arena.get_statement(id).kind;
-        self.builder.begin_child("statement".to_owned());
+        let label = match kind {
+            Block(_) => "Block Statement",
+            Expression(_) => "Expression Statement",
+            Let { name: _, init: _ } => unimplemented!(),
+        }
+        .to_owned();
+        self.builder.begin_child(label);
 
         match kind {
             Expression(exp) => self.add_expression(*exp),

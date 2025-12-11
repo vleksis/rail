@@ -22,7 +22,6 @@ fn main() {
     let env = TypeEnv::new();
     let typer = Typer::new(&env);
     let module = typer.check(syntax).unwrap();
-    dbg!(&module);
 
     let mut compiler = CodeGen::new();
     let program = compiler.compile(module);

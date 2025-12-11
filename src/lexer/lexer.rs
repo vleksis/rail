@@ -1,5 +1,6 @@
 use super::*;
 
+#[derive(Debug)]
 pub struct Lexer<'s> {
     source: &'s str,
     line: usize,
@@ -7,6 +8,7 @@ pub struct Lexer<'s> {
     current_byte: usize,
 }
 
+#[derive(Debug)]
 enum NumberPrefix {
     Bin,  // "0b"
     Oct,  // "0o"
@@ -14,6 +16,18 @@ enum NumberPrefix {
     None, // ""
 }
 
+impl NumberPrefix {
+    pub fn to_num(self) -> u32 {
+        match self {
+            Self::Bin => 2,
+            Self::Oct => 8,
+            Self::Hex => 16,
+            Self::None => 10,
+        }
+    }
+}
+
+#[derive(Debug)]
 enum NumberPostfix {
     Int64,   // "i64"
     Uint64,  // "u64"
@@ -204,6 +218,7 @@ impl<'s> Lexer<'s> {
 
             c => {
                 if c.is_ascii_digit() {
+                    self.current_byte -= 1;
                     self.scan_numeric()
                 } else {
                     self.scan_ident_or_keyword()
@@ -264,17 +279,20 @@ impl<'s> Lexer<'s> {
     }
 
     fn scan_numeric(&mut self) -> Token<'s> {
-        let _ = self.scan_number_prefix();
-        let has_dot = self.scan_number_core();
-        let num = self.get_text();
-        let post = self.scan_number_postfix();
+        let radix = dbg!(self.scan_number_prefix()).to_num();
+        let has_dot = dbg!(self.scan_number_core());
+        let mut num = dbg!(self.get_text());
+        if radix != 10 {
+            num = &num[2..];
+        }
+        let post = dbg!(self.scan_number_postfix());
         let kind = match post {
-            NumberPostfix::Int64 => Kind::Int64Lit(num.parse().unwrap()),
-            NumberPostfix::Uint64 => Kind::Uint64Lit(num.parse().unwrap()),
+            NumberPostfix::Int64 => Kind::Int64Lit(i64::from_str_radix(num, radix).unwrap()),
+            NumberPostfix::Uint64 => Kind::Uint64Lit(u64::from_str_radix(num, radix).unwrap()),
             NumberPostfix::Float64 => Kind::FloatLit(num.parse().unwrap()),
             NumberPostfix::None => match has_dot {
                 true => Kind::FloatLit(num.parse().unwrap()),
-                false => Kind::Int64Lit(num.parse().unwrap()),
+                false => Kind::Int64Lit(i64::from_str_radix(num, radix).unwrap()),
             },
         };
 
