@@ -32,7 +32,14 @@ impl<'e> Typer<'e> {
 
         let kind = &arena.get_statement(id).kind;
         match kind {
-            Expression(exp) => self.calculate_expression_type(arena, types, *exp)?,
+            Expression(exp) => {
+                self.calculate_expression_type(arena, types, *exp)?;
+            }
+            Block(stmts) => {
+                for stmt in stmts {
+                    self.check_statement(arena, types, *stmt)?;
+                }
+            }
             _ => unimplemented!(),
         };
 

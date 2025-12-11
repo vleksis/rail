@@ -57,6 +57,11 @@ impl CodeGen {
                 self.compile_expr(arena, types, chunk, *exp);
                 chunk.add_instruction(Pop, line);
             }
+            Block(stmts) => {
+                for stmt in stmts {
+                    self.compile_statement(arena, types, chunk, *stmt);
+                }
+            }
             _ => unimplemented!(),
         };
     }

@@ -44,7 +44,7 @@ impl<'s> Parser<'s> {
     }
 
     fn parse_statement(&mut self) -> statement::Id {
-        match self.previous.get_kind() {
+        match dbg!(self.current.get_kind()) {
             token::Kind::LBrace => self.parse_block(),
             token::Kind::Let => unimplemented!(),
             _ => {
@@ -55,8 +55,21 @@ impl<'s> Parser<'s> {
         }
     }
 
+    /// parse {...} including braces
     fn parse_block(&mut self) -> statement::Id {
-        unimplemented!()
+        let mut stmts = Vec::new();
+        self.advance();
+
+        loop {
+            if let token::Kind::RBrace = self.current.get_kind() {
+                self.advance();
+                break;
+            }
+            let stmt = self.parse_statement();
+            stmts.push(stmt);
+        }
+
+        self.arena.push_block(stmts)
     }
 
     fn parse_expression(&mut self) -> expression::Id {

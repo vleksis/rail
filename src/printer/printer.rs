@@ -65,6 +65,11 @@ impl<'s> TreePrinter<'s> {
 
         match kind {
             Expression(exp) => self.add_expression(*exp),
+            Block(stmts) => {
+                for stmt in stmts {
+                    self.add_statement(*stmt);
+                }
+            }
             _ => unimplemented!(),
         };
 

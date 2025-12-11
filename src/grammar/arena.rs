@@ -106,4 +106,10 @@ impl Arena {
         let node = statement::Node { kind };
         self.push_statement(node)
     }
+
+    pub(crate) fn push_block(&mut self, stmts: Vec<statement::Id>) -> statement::Id {
+        let kind = statement::Kind::Block(stmts);
+        let node = statement::Node { kind };
+        self.push_statement(node)
+    }
 }
