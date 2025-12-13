@@ -1,5 +1,5 @@
-pub mod codegen;
-pub mod error;
+mod codegen;
+mod error;
 
 pub use error::Error;
 pub use error::Result;

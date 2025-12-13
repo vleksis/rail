@@ -1,4 +1,6 @@
 use super::*;
+use token::Kind;
+use token::Token;
 
 #[derive(Debug)]
 pub struct Lexer<'s> {

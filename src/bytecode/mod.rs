@@ -1,6 +1,6 @@
-pub mod chunk;
-pub mod disassembler;
-pub mod opcode;
+mod chunk;
+mod disassembler;
+mod opcode;
 
 pub use chunk::Chunk;
 pub use opcode::OpCode;

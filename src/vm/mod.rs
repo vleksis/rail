@@ -1,6 +1,6 @@
 mod call_frame;
-pub mod error;
-pub mod vm;
+mod error;
+mod vm;
 
 pub use error::Error;
 pub use error::Result;

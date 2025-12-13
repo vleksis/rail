@@ -1,4 +1,4 @@
-use crate::{bytecode::OpCode, runtime::value::Value};
+use crate::{bytecode::OpCode, runtime::Value};
 
 #[derive(Debug)]
 pub struct Chunk {

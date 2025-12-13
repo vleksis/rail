@@ -1,7 +1,7 @@
 use crate::{
     grammar::*,
     lexer::Lexer,
-    lexer::{Token, token},
+    lexer::{token, token::Token},
 };
 
 pub struct Parser<'s> {

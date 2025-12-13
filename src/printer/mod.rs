@@ -1,3 +1,3 @@
-pub mod printer;
+mod printer;
 
 pub use printer::TreePrinter;

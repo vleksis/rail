@@ -356,11 +356,9 @@ impl<'p> Vm<'p> {
 
 #[cfg(test)]
 mod tests {
-    use crate::bytecode::chunk::Chunk;
-    use crate::bytecode::opcode::OpCode;
-    use crate::runtime::function::Function;
-    use crate::runtime::program::Program;
-    use crate::vm::vm::Vm;
+    use crate::bytecode::Chunk;
+
+    use super::*;
 
     #[test]
     fn i64_add_two_consts() {

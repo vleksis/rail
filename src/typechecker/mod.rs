@@ -1,5 +1,5 @@
-pub mod checker;
-pub mod error;
+mod checker;
+mod error;
 
 pub use checker::Typer;
 pub use error::Error;

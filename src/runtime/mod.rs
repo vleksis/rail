@@ -1,7 +1,7 @@
-pub mod function;
-pub mod object;
-pub mod program;
-pub mod value;
+mod function;
+mod object;
+mod program;
+mod value;
 
 pub use function::Function;
 pub use program::Program;
