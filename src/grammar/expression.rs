@@ -1,7 +1,7 @@
 use super::*;
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, Default)]
-pub(crate) struct Id(pub(crate) usize);
+pub(crate) struct Id(pub(super) usize);
 
 #[derive(Debug)]
 pub(crate) enum Kind {

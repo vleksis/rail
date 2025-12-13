@@ -1,3 +1,5 @@
+use std::ops::Index;
+
 use super::*;
 
 #[derive(Debug, Default)]
@@ -17,11 +19,23 @@ impl Arena {
     }
 }
 
-impl Arena {
-    pub fn get_expression(&self, id: expression::Id) -> &expression::Node {
-        &self.expressions[id.0]
-    }
+impl Index<expression::Id> for Arena {
+    type Output = expression::Node;
 
+    fn index(&self, index: expression::Id) -> &Self::Output {
+        &self.expressions[index.0]
+    }
+}
+
+impl Index<statement::Id> for Arena {
+    type Output = statement::Node;
+
+    fn index(&self, index: statement::Id) -> &Self::Output {
+        &self.statements[index.0]
+    }
+}
+
+impl Arena {
     pub fn expression_count(&self) -> usize {
         self.expressions.len()
     }
@@ -87,10 +101,6 @@ impl Arena {
 }
 
 impl Arena {
-    pub fn get_statement(&self, id: statement::Id) -> &statement::Node {
-        &self.statements[id.0]
-    }
-
     pub fn statement_count(&self) -> usize {
         self.statements.len()
     }

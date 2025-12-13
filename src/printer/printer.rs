@@ -37,7 +37,7 @@ impl<'s> TreePrinter<'s> {
     fn add_expression(&mut self, id: expression::Id) {
         use expression::Kind::*;
 
-        let kind = &self.syntax.arena.get_expression(id).kind;
+        let kind = &self.syntax.arena[id].kind;
         let label = TreePrinter::get_label(kind);
         self.builder.begin_child(label);
 
@@ -60,7 +60,7 @@ impl<'s> TreePrinter<'s> {
     fn add_statement(&mut self, id: statement::Id) {
         use statement::Kind::*;
 
-        let kind = &self.syntax.arena.get_statement(id).kind;
+        let kind = &self.syntax.arena[id].kind;
         let label = match kind {
             Block(_) => "Block Statement",
             Expression(_) => "Expression Statement",

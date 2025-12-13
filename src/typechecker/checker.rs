@@ -30,7 +30,7 @@ impl<'e> Typer<'e> {
     ) -> Result<()> {
         use statement::Kind::*;
 
-        let kind = &arena.get_statement(id).kind;
+        let kind = &arena[id].kind;
         match kind {
             Expression(exp) => {
                 self.calculate_expression_type(arena, types, *exp)?;
@@ -52,7 +52,7 @@ impl<'e> Typer<'e> {
         types: &mut HashMap<expression::Id, Type>,
         id: expression::Id,
     ) -> Result<Type> {
-        let kind = &arena.get_expression(id).kind;
+        let kind = &arena[id].kind;
         let ty = match kind {
             expression::Kind::Int64(_) => Type::Int64,
             expression::Kind::Uint64(_) => Type::Uint64,

@@ -48,7 +48,7 @@ impl CodeGen {
         use OpCode::*;
         use statement::Kind::*;
 
-        let node = arena.get_statement(id);
+        let node = &arena[id];
         let kind = &node.kind;
         let line = 42;
 
@@ -76,7 +76,7 @@ impl CodeGen {
         use OpCode::*;
         use expression::Kind::*;
 
-        let node = arena.get_expression(id);
+        let node = &arena[id];
         let kind = &node.kind;
         let ty = types.get(&id).unwrap();
         let line = 42;
