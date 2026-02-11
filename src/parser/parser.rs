@@ -2,6 +2,7 @@ use crate::{
     grammar::*,
     lexer::Lexer,
     lexer::{token, token::Token},
+    parser::Result,
 };
 
 pub struct Parser<'s> {
@@ -36,11 +37,11 @@ impl<'s> Parser<'s> {
         }
     }
 
-    pub fn parse(mut self) -> Syntax {
+    pub fn parse(mut self) -> Result<Syntax> {
         self.advance();
         let stmt = self.parse_statement();
         self.arena.set_root(stmt);
-        Syntax { arena: self.arena }
+        Ok(Syntax { arena: self.arena })
     }
 
     fn parse_statement(&mut self) -> statement::Id {

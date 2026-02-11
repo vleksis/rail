@@ -3,6 +3,7 @@ use std::collections::HashMap;
 use crate::bytecode::*;
 use crate::grammar::*;
 use crate::module::Module;
+use crate::parser::Result;
 use crate::runtime::*;
 use crate::semantic::*;
 
@@ -14,7 +15,7 @@ impl CodeGen {
         Self {}
     }
 
-    pub fn compile(&mut self, module: Module) -> Program {
+    pub fn compile(&mut self, module: Module) -> Result<Program> {
         let mut chunk = Chunk::new();
 
         self.compile_statement(
@@ -35,7 +36,7 @@ impl CodeGen {
         let mut program = Program::new();
         program.functions.push(main_fn);
 
-        program
+        Ok(program)
     }
 
     fn compile_statement(

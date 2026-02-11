@@ -6,8 +6,10 @@ license = "MIT OR Apache-2.0"
 repository = "https://github.com/vleksis/rail"
 
 [dependencies]
-thiserror = "1"
-ptree = "0.4"
+anyhow = "1.0.101"
+clap = { version = "4.5.57", features = ["derive"] }
+ptree = "0.5.2"
+thiserror = "2.0.18"
 
 [features]
 default = ["trace_vm"]
