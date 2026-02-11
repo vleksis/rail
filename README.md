@@ -22,14 +22,22 @@
 ## Build
 
 ```bash
-cargo build
 cargo test
+cargo build --bin railc
 ```
 
 ## Run (CLI is evolving)
 
 ```bash
-cargo run --release
+Usage: railc <COMMAND>
+
+Commands:
+  run    Build and execute the file
+  help   Print this message or the help of the given subcommand(s)
+
+Options:
+  -h, --help     Print help
+  -V, --version  Print version
 ```
 
 ---
