@@ -24,12 +24,10 @@ impl<'s> Parser<'s> {
 
     fn advance(&mut self) {
         let token = self.lexer.scan_token().unwrap();
-        dbg!(&token);
         self.previous = std::mem::replace(&mut self.current, token);
     }
 
     fn consume(&mut self, kind: token::Kind) {
-        dbg!(kind);
         if self.current.get_kind() == kind {
             self.advance();
         } else {
@@ -45,7 +43,7 @@ impl<'s> Parser<'s> {
     }
 
     fn parse_statement(&mut self) -> statement::Id {
-        match dbg!(self.current.get_kind()) {
+        match self.current.get_kind() {
             token::Kind::LBrace => self.parse_block(),
             token::Kind::Let => unimplemented!(),
             _ => {

@@ -71,7 +71,6 @@ impl<'e> Typer<'e> {
         };
 
         types.insert(id, ty);
-        dbg!(ty);
         Ok(ty)
     }
 }

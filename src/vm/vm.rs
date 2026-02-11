@@ -294,7 +294,7 @@ impl<'p> Vm<'p> {
 
                 Pop => {
                     self.trace_op(Pop);
-                    dbg!(self.pop()).map(|_| {})
+                    self.pop().map(|_| {})
                 }
                 Return => {
                     let func = frame.function;
@@ -316,7 +316,7 @@ impl<'p> Vm<'p> {
 
         // main always return int64
         println!("Leaving main");
-        let value = dbg!(self.pop())?;
+        let value = self.pop()?;
         match value {
             Value::Int64(i) => Ok(i),
             _ => Err(Error::TypeMismatch("Expected int64")),

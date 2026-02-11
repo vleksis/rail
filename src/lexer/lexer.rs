@@ -281,13 +281,13 @@ impl<'s> Lexer<'s> {
     }
 
     fn scan_numeric(&mut self) -> Token<'s> {
-        let radix = dbg!(self.scan_number_prefix()).to_num();
-        let has_dot = dbg!(self.scan_number_core());
-        let mut num = dbg!(self.get_text());
+        let radix = self.scan_number_prefix().to_num();
+        let has_dot = self.scan_number_core();
+        let mut num = self.get_text();
         if radix != 10 {
             num = &num[2..];
         }
-        let post = dbg!(self.scan_number_postfix());
+        let post = self.scan_number_postfix();
         let kind = match post {
             NumberPostfix::Int64 => Kind::Int64Lit(i64::from_str_radix(num, radix).unwrap()),
             NumberPostfix::Uint64 => Kind::Uint64Lit(u64::from_str_radix(num, radix).unwrap()),
