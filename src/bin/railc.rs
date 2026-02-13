@@ -1,6 +1,7 @@
+use std::io::{self, BufWriter, Write};
 use std::path::{Path, PathBuf};
 
-use anyhow::{Context, Result};
+use anyhow::{Context, Result, bail};
 use clap::Subcommand;
 
 use rail::codegen::CodeGen;
@@ -8,6 +9,7 @@ use rail::grammar::Syntax;
 use rail::lexer::Lexer;
 use rail::module::Module;
 use rail::parser::Parser;
+use rail::printer::TreePrinter;
 use rail::runtime::Program;
 use rail::semantic::TypeEnv;
 use rail::typechecker::Typer;
@@ -23,14 +25,30 @@ struct Cli {
 }
 
 #[derive(Subcommand)]
-#[non_exhaustive]
 enum Command {
     /// Build and execute the file
     Run {
         path: PathBuf,
     },
+    /// Dump file
+    Dump {
+        input: PathBuf,
+        /// Output path If omitted, writes to stdout.
+        #[arg(short, long)]
+        out: Option<PathBuf>,
+        #[arg(short, long, value_enum,  default_value_t = DumpFormat::Ast)]
+        format: DumpFormat,
+    },
     Build {},
     Check {},
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, clap::ValueEnum)]
+enum DumpFormat {
+    /// used to print abstract syntax tree
+    Ast,
+    /// used to print bytecode in human-readable format (not implemented yet)
+    Bytecode,
 }
 
 struct Driver {}
@@ -44,6 +62,24 @@ impl Driver {
         let _ = Self::execute(&program)?;
 
         Ok(())
+    }
+    fn dump(input: &Path, out: Option<&Path>) -> Result<()> {
+        let source = Self::read(input)?;
+        let syntax = Self::parse(&source)?;
+
+        match out {
+            Some(path) => {
+                let file = std::fs::File::create(path)
+                    .context(format!("failed to create {}", path.display()))?;
+                let mut writer = BufWriter::new(file);
+                Self::print_ast(&syntax, &mut writer)
+            }
+            None => {
+                let stdout = io::stdout();
+                let mut writer = BufWriter::new(stdout.lock());
+                Self::print_ast(&syntax, &mut writer)
+            }
+        }
     }
 
     fn read(path: &Path) -> Result<String> {
@@ -67,6 +103,12 @@ impl Driver {
         let mut vm = Vm::from(program);
         vm.run().context("executing failed")
     }
+    fn print_ast<W: Write>(syntax: &Syntax, w: &mut W) -> Result<()> {
+        let printer = TreePrinter::new(syntax);
+        printer.print(w).context("failed printing to file")?;
+
+        Ok(())
+    }
 }
 
 fn main() -> Result<()> {
@@ -75,8 +117,14 @@ fn main() -> Result<()> {
         Command::Run { path } => {
             Driver::run(&path)?;
         }
+        Command::Dump { input, out, format } => match format {
+            DumpFormat::Ast => {
+                Driver::dump(&input, out.as_deref())?;
+            }
+            _ => bail!("dump bytecode is not implemented yet"),
+        },
         _ => {
-            unimplemented!()
+            bail!("unimplemented yet")
         }
     };
 

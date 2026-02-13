@@ -1,4 +1,5 @@
-use ptree::{TreeBuilder, item::StringItem, print_tree};
+use ptree::{TreeBuilder, write_tree};
+use std::io::Result;
 
 use crate::grammar::*;
 
@@ -15,11 +16,11 @@ impl<'s> TreePrinter<'s> {
         }
     }
 
-    pub fn print(mut self) {
+    pub fn print<W: std::io::Write>(mut self, w: &mut W) -> Result<()> {
         let root = self.syntax.arena.get_root();
         self.add_statement(root);
         let tree = self.builder.build();
-        print_tree(&tree).unwrap();
+        write_tree(&tree, w)
     }
 
     fn get_label(kind: &expression::Kind) -> String {
